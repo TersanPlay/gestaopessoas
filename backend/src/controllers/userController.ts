@@ -1,23 +1,11 @@
 import { Response } from 'express';
 import bcrypt from 'bcryptjs';
-import prisma from '../utils/prisma.js';
 import { AuthRequest } from '../middlewares/authMiddleware.js';
+import { userRepository } from '../repositories/userRepository.js';
 
 export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        department: {
-          select: {
-            name: true,
-          },
-        },
-      },
-    });
+    const users = await userRepository.findAll();
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
@@ -27,16 +15,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        department: true,
-      },
-    });
+    const user = await userRepository.findById(id);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -52,21 +31,19 @@ export const createUser = async (req: AuthRequest, res: Response) => {
   try {
     const { name, email, password, role, departmentId } = req.body;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        departmentId,
-      },
+    const user = await userRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      department: departmentId ? { connect: { id: departmentId } } : undefined,
     });
 
     res.status(201).json({ id: user.id, name: user.name, email: user.email, role: user.role });
@@ -90,7 +67,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const data: any = {
         name,
         email,
-        departmentId
+        department: departmentId ? { connect: { id: departmentId } } : undefined
     };
 
     if (req.user.role === 'ADMIN' && role) {
@@ -101,10 +78,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         data.password = await bcrypt.hash(password, 10);
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data,
-    });
+    const user = await userRepository.update(id, data);
 
     res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (error) {
