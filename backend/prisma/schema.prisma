@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COLABORADOR
+  RECEPCIONISTA
+}
+
+enum VisitStatus {
+  PENDING
+  CHECKIN
+  CHECKOUT
+  CANCELLED
+}
+
+model User {
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  password     String
+  role         Role        @default(COLABORADOR)
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  hostedVisits Visit[]     @relation("HostVisits")
+
+  @@map("users")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  responsible String?
+  location    String?
+  users       User[]
+  visits      Visit[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("departments")
+}
+
+model Visitor {
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+  phone     String?
+  photo     String?
+  visits    Visit[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("visitors")
+}
+
+model Visit {
+  id           String      @id @default(uuid())
+  date         DateTime
+  status       VisitStatus @default(PENDING)
+  motive       String?
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  
+  visitorId    String
+  visitor      Visitor     @relation(fields: [visitorId], references: [id])
+  
+  departmentId String
+  department   Department  @relation(fields: [departmentId], references: [id])
+  
+  hostId       String
+  host         User        @relation("HostVisits", fields: [hostId], references: [id])
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("visits")
+}
