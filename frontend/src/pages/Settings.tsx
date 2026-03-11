@@ -1,18 +1,26 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Save } from 'lucide-react';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2, Save, Shield, Server, Download, RotateCw } from 'lucide-react';
 
 const Settings = () => {
   const { user, setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Backup state
+  const [backups, setBackups] = useState<{ file: string; size: number; modified: string }[]>([]);
+  const [backupScope, setBackupScope] = useState('full');
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState<string | null>(null);
+  const [backupMsg, setBackupMsg] = useState('');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -72,6 +80,56 @@ const Settings = () => {
       setError('Erro ao atualizar perfil');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBackups = async () => {
+    if (!isAdmin) return;
+    try {
+      const response = await api.get('/backup/list');
+      setBackups(response.data || []);
+    } catch (err) {
+      console.error(err);
+      setBackupMsg('Erro ao listar backups');
+    }
+  };
+
+  useEffect(() => {
+    fetchBackups();
+  }, [isAdmin]);
+
+  const humanSize = (size: number) => {
+    if (size > 1_000_000) return (size / 1_000_000).toFixed(1) + ' MB';
+    if (size > 1_000) return (size / 1_000).toFixed(1) + ' KB';
+    return size + ' B';
+  };
+
+  const handleBackup = async () => {
+    setBackupMsg('');
+    setBackupLoading(true);
+    try {
+      await api.post('/backup', { scope: backupScope });
+      setBackupMsg('Backup gerado com sucesso');
+      fetchBackups();
+    } catch (err) {
+      console.error(err);
+      setBackupMsg('Erro ao gerar backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleRestore = async (file: string) => {
+    setRestoreLoading(file);
+    setBackupMsg('');
+    try {
+      await api.post('/backup/restore', { file });
+      setBackupMsg('Restauração concluída');
+    } catch (err) {
+      console.error(err);
+      setBackupMsg('Erro ao restaurar backup');
+    } finally {
+      setRestoreLoading(null);
     }
   };
 
@@ -181,6 +239,92 @@ const Settings = () => {
           </CardFooter>
         </form>
       </Card>
+
+      {isAdmin && (
+        <Card className="border-2 border-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" /> Backup & Restauração
+            </CardTitle>
+            <CardDescription>Disponível apenas para administradores.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {backupMsg && (
+              <div className="text-sm text-primary font-medium bg-primary/5 border border-primary/20 px-3 py-2 rounded">
+                {backupMsg}
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 items-center">
+              <div className="flex-1 w-full">
+                <Label className="text-sm">Tipo de backup</Label>
+                <select
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
+                  value={backupScope}
+                  onChange={(e) => setBackupScope(e.target.value)}
+                >
+                  <option value="full">Completo</option>
+                  <option value="visits">Visitas (visits, visitors, departments, users)</option>
+                  <option value="visitors">Visitantes</option>
+                  <option value="departments">Departamentos</option>
+                  <option value="users">Usuários</option>
+                  <option value="totem">Totem (visitors + visits)</option>
+                </select>
+              </div>
+              <Button onClick={handleBackup} disabled={backupLoading} className="w-full sm:w-auto">
+                {backupLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Server className="h-4 w-4 mr-2" />}
+                Gerar backup
+              </Button>
+            </div>
+
+            <div className="border rounded-lg">
+              <div className="px-3 py-2 border-b text-sm font-semibold text-muted-foreground flex justify-between items-center">
+                <span>Backups existentes</span>
+                <Button variant="ghost" size="sm" onClick={fetchBackups}>
+                  <RotateCw className="h-4 w-4 mr-1" /> Atualizar
+                </Button>
+              </div>
+              <div className="divide-y max-h-72 overflow-auto">
+                {backups.length === 0 && (
+                  <div className="p-3 text-sm text-muted-foreground">Nenhum backup encontrado.</div>
+                )}
+                {backups.map((b) => (
+                  <div key={b.file} className="p-3 text-sm flex items-center justify-between gap-2">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground break-all">{b.file}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {new Date(b.modified).toLocaleString()} • {humanSize(b.size)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRestore(b.file)}
+                        disabled={!!restoreLoading}
+                      >
+                        {restoreLoading === b.file ? (
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        ) : (
+                          <RotateCw className="h-4 w-4 mr-1" />
+                        )}
+                        Restaurar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(`/db/backups/${b.file}`, '_blank')}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
