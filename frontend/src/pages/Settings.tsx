@@ -249,26 +249,36 @@ const Settings = () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 items-center">
-              <div className="flex-1 w-full">
-                <Label className="text-sm">Tipo de backup</Label>
-                <select
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
-                  value={backupScope}
-                  onChange={(e) => setBackupScope(e.target.value)}
-                >
-                  <option value="full">Completo</option>
-                  <option value="visits">Visitas (visits, visitors, departments, users)</option>
-                  <option value="visitors">Visitantes</option>
-                  <option value="departments">Departamentos</option>
-                  <option value="users">Usuários</option>
-                  <option value="totem">Totem (visitors + visits)</option>
-                </select>
+            <div className="flex flex-col gap-3">
+              <Label className="text-sm">Tipo de backup</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  { key: 'full', label: 'Completo', icon: Shield, color: 'text-indigo-600', hover: 'hover:bg-indigo-50 hover:border-indigo-200' },
+                  { key: 'visits', label: 'Visitas', icon: RotateCw, color: 'text-emerald-600', hover: 'hover:bg-emerald-50 hover:border-emerald-200' },
+                  { key: 'visitors', label: 'Visitantes', icon: Server, color: 'text-blue-600', hover: 'hover:bg-blue-50 hover:border-blue-200' },
+                  { key: 'departments', label: 'Departamentos', icon: Download, color: 'text-amber-600', hover: 'hover:bg-amber-50 hover:border-amber-200' },
+                  { key: 'users', label: 'Usuários', icon: Save, color: 'text-rose-600', hover: 'hover:bg-rose-50 hover:border-rose-200' },
+                  { key: 'totem', label: 'Totem', icon: Server, color: 'text-slate-600', hover: 'hover:bg-slate-50 hover:border-slate-200' },
+                ].map((opt) => (
+                  <Button
+                    key={opt.key}
+                    type="button"
+                    variant={backupScope === opt.key ? 'default' : 'outline'}
+                    className={`justify-start w-full h-10 border ${opt.hover}`}
+                    onClick={() => setBackupScope(opt.key)}
+                  >
+                    <opt.icon className={`h-4 w-4 mr-2 ${backupScope === opt.key ? '' : opt.color}`} />
+                    {opt.label}
+                  </Button>
+                ))}
               </div>
-              <Button onClick={handleBackup} disabled={backupLoading} className="w-full sm:w-auto">
-                {backupLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Server className="h-4 w-4 mr-2" />}
-                Gerar backup
-              </Button>
+
+              <div className="flex items-center justify-start">
+                <Button onClick={handleBackup} disabled={backupLoading} className="w-full sm:w-auto">
+                  {backupLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Server className="h-4 w-4 mr-2" />}
+                  Gerar backup ({backupScope})
+                </Button>
+              </div>
             </div>
 
             <div className="border rounded-lg">
