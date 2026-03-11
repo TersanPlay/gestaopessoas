@@ -30,9 +30,12 @@ const scopeTables: Record<string, string[]> = {
 
 const getPgBin = () => process.env.PG_BIN_PATH || DEFAULT_PG_BIN;
 
+const sanitizeUrl = (url: string) => url.split('?')[0]; // remove query params como schema=public
+
 const buildPgDumpCmd = (scope: string, outFile: string) => {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL não definido');
+  const urlRaw = process.env.DATABASE_URL;
+  if (!urlRaw) throw new Error('DATABASE_URL não definido');
+  const url = sanitizeUrl(urlRaw);
   const bin = getPgBin();
   const base = `"${path.join(bin, 'pg_dump.exe')}" -F c -f "${outFile}" -d "${url}"`;
   const tables = scopeTables[scope];
@@ -43,8 +46,9 @@ const buildPgDumpCmd = (scope: string, outFile: string) => {
 };
 
 const buildPgRestoreCmd = (file: string) => {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error('DATABASE_URL não definido');
+  const urlRaw = process.env.DATABASE_URL;
+  if (!urlRaw) throw new Error('DATABASE_URL não definido');
+  const url = sanitizeUrl(urlRaw);
   const bin = getPgBin();
   return `"${path.join(bin, 'pg_restore.exe')}" -d "${url}" "${file}"`;
 };
