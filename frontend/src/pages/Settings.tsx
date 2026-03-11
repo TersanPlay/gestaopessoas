@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ const Settings = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const isAdmin = user?.role === 'ADMIN';
+  const [tab, setTab] = useState<'profile' | 'backup'>('profile');
 
   // Backup state
   const [backups, setBackups] = useState<{ file: string; size: number; modified: string }[]>([]);
@@ -65,12 +66,8 @@ const Settings = () => {
       }
 
       const response = await api.put(`/users/${user?.id}`, data);
-      
-      // Update local user state if needed (usually AuthContext handles this, but we might need to update the stored user)
-      // Ideally AuthContext should expose a method to update user, or we manually update it.
-      // For now, assuming setUser updates the context state.
       if (setUser) {
-          setUser({ ...user!, name: response.data.name, email: response.data.email });
+        setUser({ ...user!, name: response.data.name, email: response.data.email });
       }
 
       setSuccess('Perfil atualizado com sucesso!');
@@ -134,113 +131,110 @@ const Settings = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Gerencie suas informações pessoais e segurança.
-        </p>
+    <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground">Gerencie suas informações pessoais e segurança.</p>
+        </div>
+        <div className="inline-flex items-center rounded-lg border bg-card p-1 gap-1">
+          <Button variant={tab === 'profile' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('profile')}>
+            Perfil
+          </Button>
+          {isAdmin && (
+            <Button variant={tab === 'backup' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('backup')}>
+              Backup
+            </Button>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Perfil</CardTitle>
-          <CardDescription>
-            Atualize suas informações de contato e senha.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {success && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
-                {success}
-              </div>
-            )}
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                {error}
-              </div>
-            )}
-            
-            <div className="flex flex-col items-center justify-center mb-6 gap-2">
-               <Avatar className="h-24 w-24">
+      {tab === 'profile' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Perfil</CardTitle>
+            <CardDescription>Atualize suas informações de contato e senha.</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {success && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                  {success}
+                </div>
+              )}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex flex-col items-center justify-center mb-6 gap-2">
+                <Avatar className="h-24 w-24">
                   <AvatarFallback className="text-2xl bg-primary/10 text-primary font-bold">
                     {userInitials}
                   </AvatarFallback>
-               </Avatar>
-               <div className="text-center">
+                </Avatar>
+                <div className="text-center">
                   <p className="font-medium text-lg">{user?.name}</p>
                   <p className="text-sm text-muted-foreground capitalize">{user?.role?.toLowerCase()}</p>
-               </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="password">Nova Senha (opcional)</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Deixe em branco para manter"
-                />
+                </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Repita a nova senha"
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Salvar Alterações
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
 
-      {isAdmin && (
+              <div className="grid gap-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Nova Senha (opcional)</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Deixe em branco para manter"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Repita a nova senha"
+                  />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      )}
+
+      {tab === 'backup' && isAdmin && (
         <Card className="border-2 border-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
