@@ -1,10 +1,10 @@
 import express from 'express';
 import { getDashboardStats } from '../controllers/dashboardController.js';
-import { authMiddleware } from '../middlewares/authMiddleware.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authenticate);
 
 router.get('/stats', getDashboardStats);
 

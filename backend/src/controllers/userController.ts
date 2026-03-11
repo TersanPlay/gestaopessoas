@@ -8,6 +8,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     const users = await userRepository.findAll();
     res.json(users);
   } catch (error) {
+    console.error('Error getting users:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -15,7 +16,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
 export const getUserById = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const user = await userRepository.findById(id);
+    const user = await userRepository.findById(id as string);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -23,6 +24,7 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 
     res.json(user);
   } catch (error) {
+    console.error('Error getting user by id:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -67,8 +69,11 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     const data: any = {
         name,
         email,
-        department: departmentId ? { connect: { id: departmentId } } : undefined
     };
+
+    if (req.user.role === 'ADMIN' && departmentId !== undefined) {
+      data.departmentId = departmentId;
+    }
 
     if (req.user.role === 'ADMIN' && role) {
         data.role = role;
@@ -78,7 +83,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         data.password = await bcrypt.hash(password, 10);
     }
 
-    const user = await userRepository.update(id, data);
+    const user = await userRepository.update(id as string, data);
 
     res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (error) {
@@ -89,7 +94,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.user.delete({ where: { id } });
+    await userRepository.delete(id as string);
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });

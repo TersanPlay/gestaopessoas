@@ -23,9 +23,18 @@ export const register = async (req: Request, res: Response) => {
       },
     });
 
-    const token = signToken({ id: user.id, role: user.role });
+    const token = signToken({ id: user.id, role: user.role, departmentId: user.departmentId });
 
-    res.status(201).json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
+    res.status(201).json({ 
+        user: { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email, 
+            role: user.role,
+            departmentId: user.departmentId
+        }, 
+        token 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -46,9 +55,18 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = signToken({ id: user.id, role: user.role });
+    const token = signToken({ id: user.id, role: user.role, departmentId: user.departmentId });
 
-    res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
+    res.json({ 
+        user: { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email, 
+            role: user.role,
+            departmentId: user.departmentId
+        }, 
+        token 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });

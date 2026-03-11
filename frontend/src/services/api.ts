@@ -13,3 +13,14 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
+export const reportsService = {
+  getVisits: async (params: any) => {
+    const response = await api.get('/reports/visits', { params });
+    return response.data;
+  },
+  getStats: async (params: any) => {
+    const response = await api.get('/reports/stats', { params });
+    return response.data;
+  }
+};

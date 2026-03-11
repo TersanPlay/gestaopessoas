@@ -1,5 +1,21 @@
 {
+  "name": "gestao-teste",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces"
+  },
   "devDependencies": {
     "tsx": "^4.21.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usuario/gestao-teste.git"
   }
 }

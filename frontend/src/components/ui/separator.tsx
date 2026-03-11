@@ -1,11 +1,10 @@
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 
 const Separator = React.forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot> & {
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
     orientation?: "horizontal" | "vertical"
     decorative?: boolean
   }

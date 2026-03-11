@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Save } from 'lucide-react';
 
 const Settings = () => {
@@ -19,6 +20,13 @@ const Settings = () => {
     password: '',
     confirmPassword: ''
   });
+
+  const userInitials = useMemo(() => {
+    if (!user?.name) return 'U';
+    const names = user.name.split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  }, [user?.name]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -96,6 +104,18 @@ const Settings = () => {
               </div>
             )}
             
+            <div className="flex flex-col items-center justify-center mb-6 gap-2">
+               <Avatar className="h-24 w-24">
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary font-bold">
+                    {userInitials}
+                  </AvatarFallback>
+               </Avatar>
+               <div className="text-center">
+                  <p className="font-medium text-lg">{user?.name}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{user?.role?.toLowerCase()}</p>
+               </div>
+            </div>
+
             <div className="grid gap-2">
               <Label htmlFor="name">Nome</Label>
               <Input

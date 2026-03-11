@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building, CalendarCheck, Clock, ArrowUpRight } from 'lucide-react';
+import { Users, Building, CalendarCheck, Clock } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -153,47 +153,49 @@ const Dashboard = () => {
                 <Skeleton className="h-12 w-full" />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Visitante</TableHead>
-                    <TableHead>Departamento</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Horário</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stats?.recentVisits && stats.recentVisits.length > 0 ? (
-                    stats.recentVisits.map((visit) => (
-                      <TableRow key={visit.id}>
-                        <TableCell className="font-medium">{visit.visitor.name}</TableCell>
-                        <TableCell>{visit.department?.name || '-'}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            visit.status === 'CHECKIN' ? 'bg-green-100 text-green-800' :
-                            visit.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                            visit.status === 'CHECKOUT' ? 'bg-gray-100 text-gray-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {visit.status === 'CHECKIN' ? 'Ativo' :
-                             visit.status === 'PENDING' ? 'Agendado' :
-                             visit.status === 'CHECKOUT' ? 'Finalizado' : 'Cancelado'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {new Date(visit.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Visitante</TableHead>
+                      <TableHead>Departamento</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Horário</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stats?.recentVisits && stats.recentVisits.length > 0 ? (
+                      stats.recentVisits.map((visit) => (
+                        <TableRow key={visit.id}>
+                          <TableCell className="font-medium whitespace-nowrap">{visit.visitor.name}</TableCell>
+                          <TableCell className="whitespace-nowrap">{visit.department?.name || '-'}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              visit.status === 'CHECKIN' ? 'bg-green-100 text-green-800' :
+                              visit.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                              visit.status === 'CHECKOUT' ? 'bg-gray-100 text-gray-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {visit.status === 'CHECKIN' ? 'Ativo' :
+                               visit.status === 'PENDING' ? 'Agendado' :
+                               visit.status === 'CHECKOUT' ? 'Finalizado' : 'Cancelado'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right whitespace-nowrap">
+                            {new Date(visit.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          Nenhuma visita recente encontrada.
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        Nenhuma visita recente encontrada.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

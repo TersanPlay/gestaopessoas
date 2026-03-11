@@ -13,10 +13,45 @@ export const getVisitors = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getVisitorById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const visitor = await prisma.visitor.findUnique({
+      where: { id: id as string },
+      include: {
+        visits: {
+          orderBy: { date: 'desc' },
+          include: {
+            department: {
+                select: { name: true }
+            },
+            host: {
+                select: { name: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!visitor) {
+      return res.status(404).json({ message: 'Visitor not found' });
+    }
+
+    res.json(visitor);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export const createVisitor = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, document, phone, photo } = req.body;
+    const { name, document, phone, photo, consentGiven, faceEmbedding } = req.body;
     
+    if (consentGiven !== true) {
+        return res.status(400).json({ message: 'Consent is required' });
+    }
+
     const existing = await prisma.visitor.findUnique({
       where: { document },
     });
@@ -31,6 +66,9 @@ export const createVisitor = async (req: AuthRequest, res: Response) => {
         document,
         phone,
         photo,
+        faceEmbedding,
+        consentGiven,
+        consentDate: new Date(),
       },
     });
     res.status(201).json(visitor);
@@ -42,11 +80,11 @@ export const createVisitor = async (req: AuthRequest, res: Response) => {
 export const updateVisitor = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, document, phone, photo } = req.body;
+        const { name, document, phone, photo, faceEmbedding } = req.body;
 
         const visitor = await prisma.visitor.update({
-            where: { id },
-            data: { name, document, phone, photo }
+            where: { id: id as string },
+            data: { name, document, phone, photo, faceEmbedding }
         });
         res.json(visitor);
     } catch (error) {
@@ -57,7 +95,7 @@ export const updateVisitor = async (req: AuthRequest, res: Response) => {
 export const deleteVisitor = async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        await prisma.visitor.delete({ where: { id } });
+        await prisma.visitor.delete({ where: { id: id as string } });
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ message: 'Internal server error' });

@@ -6,6 +6,7 @@ interface User {
   name: string;
   email: string;
   role: 'ADMIN' | 'COLABORADOR' | 'RECEPCIONISTA';
+  departmentId?: string;
 }
 
 interface AuthContextData {
@@ -14,6 +15,7 @@ interface AuthContextData {
   login: (userData: object) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -51,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ signed: !!user, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ signed: !!user, user, login, logout, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );

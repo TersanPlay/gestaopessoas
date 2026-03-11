@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -56,14 +54,14 @@
     --shadow-elevated: 0 25px 50px -12px hsl(222 47% 11% / 0.25);
 
     /* Sidebar */
-    --sidebar-background: 238 66% 52%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 238 66% 52%;
-    --sidebar-accent: 238 66% 58%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 238 50% 45%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 238 66% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 238 66% 52%;
   }
 
   .dark {

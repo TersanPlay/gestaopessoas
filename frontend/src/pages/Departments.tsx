@@ -12,14 +12,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
 
 interface Department {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  responsible?: string;
+  location?: string;
 }
 
 const Departments = () => {
@@ -29,8 +30,16 @@ const Departments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentDept, setCurrentDept] = useState<Partial<Department>>({});
   const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const isAdmin = user?.role === 'ADMIN';
+
+  const filteredDepartments = departments.filter(dept => 
+    dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (dept.description ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (dept.responsible && dept.responsible.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (dept.location && dept.location.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   useEffect(() => {
     fetchDepartments();
@@ -91,7 +100,7 @@ const Departments = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Departamentos</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gradient">Departamentos</h1>
         {isAdmin && (
           <Button onClick={openNewDialog} className="btn-hero">
             <Plus className="mr-2 h-4 w-4" /> Novo Departamento
@@ -99,19 +108,37 @@ const Departments = () => {
         )}
       </div>
       
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome, descrição, responsável ou local..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex justify-center p-8">
            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {departments.map((dept) => (
+          {filteredDepartments.map((dept) => (
             <Card key={dept.id} className="relative group hover:shadow-lg transition-all duration-200 border-l-4 border-l-transparent hover:border-l-primary">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">{dept.name}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{dept.description}</p>
+              <CardContent className="space-y-2">
+                {dept.description && <p className="text-muted-foreground">{dept.description}</p>}
+                {dept.responsible && (
+                  <p className="text-sm text-muted-foreground"><span className="font-semibold">Responsável:</span> {dept.responsible}</p>
+                )}
+                {dept.location && (
+                  <p className="text-sm text-muted-foreground"><span className="font-semibold">Local:</span> {dept.location}</p>
+                )}
               </CardContent>
               {isAdmin && (
                 <CardFooter className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -125,7 +152,7 @@ const Departments = () => {
               )}
             </Card>
           ))}
-          {departments.length === 0 && (
+          {filteredDepartments.length === 0 && (
              <div className="col-span-full text-center py-12 text-muted-foreground bg-white rounded-lg border border-dashed">
                 <p>Nenhum departamento encontrado.</p>
                 {isAdmin && <Button variant="link" onClick={openNewDialog}>Criar o primeiro</Button>}
@@ -157,13 +184,24 @@ const Departments = () => {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Descrição
+                <Label htmlFor="responsible" className="text-right">
+                  Responsável
                 </Label>
                 <Input
-                  id="description"
-                  value={currentDept.description || ''}
-                  onChange={(e) => setCurrentDept({ ...currentDept, description: e.target.value })}
+                  id="responsible"
+                  value={currentDept.responsible || ''}
+                  onChange={(e) => setCurrentDept({ ...currentDept, responsible: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Localização
+                </Label>
+                <Input
+                  id="location"
+                  value={currentDept.location || ''}
+                  onChange={(e) => setCurrentDept({ ...currentDept, location: e.target.value })}
                   className="col-span-3"
                 />
               </div>

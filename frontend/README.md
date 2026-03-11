@@ -1,5 +1,12 @@
 # React + TypeScript + Vite
 
+Credenciais para Login:
+
+- Email: admin@gestao.com
+- Senha: admin123
+
+npm run dev:frontend
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

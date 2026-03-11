@@ -8,6 +8,6 @@ router.use(authenticate);
 
 router.get('/', getVisits);
 router.post('/', createVisit);
-router.patch('/:id/status', authorize(['ADMIN', 'RECEPCIONISTA']), updateVisitStatus);
+router.patch('/:id/status', authorize(['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']), updateVisitStatus);
 
 export default router;

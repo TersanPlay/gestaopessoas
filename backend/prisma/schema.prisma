@@ -38,6 +38,7 @@ model User {
 model Department {
   id          String   @id @default(uuid())
   name        String
+  description String?
   responsible String?
   location    String?
   users       User[]
@@ -54,6 +55,9 @@ model Visitor {
   document  String   @unique
   phone     String?
   photo     String?
+  faceEmbedding Json?
+  consentGiven Boolean  @default(false)
+  consentDate  DateTime?
   visits    Visit[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,14 +73,16 @@ model Visit {
   checkInTime  DateTime?
   checkOutTime DateTime?
   
+  accessCode   String?
+  
   visitorId    String
   visitor      Visitor     @relation(fields: [visitorId], references: [id])
   
   departmentId String
   department   Department  @relation(fields: [departmentId], references: [id])
   
-  hostId       String
-  host         User        @relation("HostVisits", fields: [hostId], references: [id])
+  hostId       String?
+  host         User?       @relation("HostVisits", fields: [hostId], references: [id])
   
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

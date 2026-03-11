@@ -1,4 +1,4 @@
-import prisma from '../utils/prisma';
+import prisma from '../utils/prisma.js';
 import { User, Prisma } from '@prisma/client';
 
 export class UserRepository {
@@ -9,6 +9,7 @@ export class UserRepository {
         name: true,
         email: true,
         role: true,
+        departmentId: true,
         department: {
           select: {
             name: true,
@@ -26,6 +27,7 @@ export class UserRepository {
         name: true,
         email: true,
         role: true,
+        departmentId: true,
         department: true,
       },
     });
