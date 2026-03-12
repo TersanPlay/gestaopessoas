@@ -9,6 +9,7 @@ import visitorRoutes from './routes/visitorRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import totemRoutes from './routes/totemRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import backupRoutes from './routes/backupRoutes.js';
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/visitors', visitorRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/totem', totemRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/backup', backupRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Hello from Backend!' });
