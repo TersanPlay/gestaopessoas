@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Loader2, Save, Shield, Server, Download, RotateCw, Trash2 } from 'lucide-react';
 
@@ -131,20 +139,24 @@ const Settings = () => {
     }
   };
 
-  const handleDelete = async (file: string) => {
-    setDeleteLoading(file);
+  const handleDelete = (file: string) => {
+    setConfirmDeleteFile(file);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteFile) return;
+    setDeleteLoading(confirmDeleteFile);
     setBackupMsg('');
     try {
-      const confirmMsg = `Deseja remover o backup "${file}"? Esta ação não poderá ser desfeita.`;
-      if (!window.confirm(confirmMsg)) return;
-      await api.delete(`/backup/${encodeURIComponent(file)}`);
-      setBackupMsg('Backup removido com sucesso');
+      await api.delete(`/backup/${encodeURIComponent(confirmDeleteFile)}`);
+      setBackupMsg(`Backup "${confirmDeleteFile}" removido com sucesso`);
       fetchBackups();
     } catch (err) {
       console.error(err);
       setBackupMsg('Erro ao remover backup');
     } finally {
       setDeleteLoading(null);
+      setConfirmDeleteFile(null);
     }
   };
 
