@@ -4,10 +4,11 @@ import api from '../services/api';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, FileText, Pencil, Clock } from "lucide-react";
+import { ArrowLeft, User, Phone, FileText, Pencil, Clock, Eye } from "lucide-react";
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { maskDocument } from "@/lib/formatters";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface VisitHistory {
   id: string;
@@ -35,6 +36,8 @@ const VisitorDetails = () => {
   const [visitor, setVisitor] = useState<VisitorDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showPhotoAction, setShowPhotoAction] = useState(false);
+  const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
 
   useEffect(() => {
     fetchVisitorDetails();
@@ -98,12 +101,33 @@ const VisitorDetails = () => {
         <Card className="h-fit">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 relative">
-                <Avatar className="h-32 w-32 mx-auto border-4 border-muted">
-                    <AvatarImage src={visitor.photo || undefined} alt={visitor.name} className="object-cover" />
-                    <AvatarFallback className="text-4xl bg-muted">
-                        {visitor.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                </Avatar>
+                <button
+                  type="button"
+                  className="rounded-full"
+                  onClick={() => visitor.photo && setShowPhotoAction((prev) => !prev)}
+                  aria-label={visitor.photo ? "Exibir botão para ver foto" : "Visitante sem foto"}
+                >
+                  <Avatar className="h-32 w-32 mx-auto border-4 border-muted">
+                      <AvatarImage src={visitor.photo || undefined} alt={visitor.name} className="object-cover" />
+                      <AvatarFallback className="text-4xl bg-muted">
+                          {visitor.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                  </Avatar>
+                </button>
+                {visitor.photo && showPhotoAction && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    className="absolute bottom-0 right-0 rounded-full shadow-md"
+                    aria-label="Ver foto do visitante"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setIsPhotoViewerOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                )}
             </div>
             <CardTitle className="text-xl">{visitor.name}</CardTitle>
           </CardHeader>
@@ -205,6 +229,21 @@ const VisitorDetails = () => {
         visitorToEdit={visitor}
         onSuccess={handleEditSuccess}
       />
+
+      <Dialog open={isPhotoViewerOpen} onOpenChange={setIsPhotoViewerOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Foto do Visitante</DialogTitle>
+          </DialogHeader>
+          {visitor.photo && (
+            <img
+              src={visitor.photo}
+              alt={`Foto de ${visitor.name}`}
+              className="w-full max-h-[70vh] object-contain rounded-md border bg-muted"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

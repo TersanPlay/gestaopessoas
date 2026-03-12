@@ -104,8 +104,6 @@ export const PrinterService = {
 
     // --- DETALHES DA VISITA ---
     
-    const startDetailsY = y;
-    
     // Detalhes
     doc.setFontSize(8);
     doc.setFont('courier', 'bold');
