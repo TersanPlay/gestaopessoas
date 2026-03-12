@@ -11,9 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, User, Phone, FileText, Search, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, User, Phone, FileText, Search, Eye, Download } from 'lucide-react';
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { maskDocument } from "@/lib/formatters";
+import { toCsv } from "@/lib/csv";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Visitor {
@@ -41,6 +42,7 @@ const Visitors = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [phoneFilter, setPhoneFilter] = useState('ALL');
   const [consentFilter, setConsentFilter] = useState('ALL');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -97,6 +99,23 @@ const Visitors = () => {
     return matchesSearch && matchesPhone && matchesConsent;
   });
 
+  const handleExportCsv = () => {
+    setExporting(true);
+    try {
+      const headers = ['name', 'document', 'phone', 'consentGiven'];
+      const csv = toCsv(visitors, headers);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'visitantes.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -104,9 +123,15 @@ const Visitors = () => {
           <h1 className="text-3xl font-bold tracking-tight text-gradient">Visitantes</h1>
           <p className="text-muted-foreground mt-1">Gerencie o cadastro de visitantes frequentes.</p>
         </div>
-        <Button onClick={openNewDialog} className="btn-hero">
-          <Plus className="mr-2 h-4 w-4" /> Novo Visitante
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCsv} disabled={exporting}>
+            {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+            Exportar CSV
+          </Button>
+          <Button onClick={openNewDialog} className="btn-hero">
+            <Plus className="mr-2 h-4 w-4" /> Novo Visitante
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
