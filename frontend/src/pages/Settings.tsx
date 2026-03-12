@@ -31,6 +31,7 @@ const Settings = () => {
   const [restoreLoading, setRestoreLoading] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [backupMsg, setBackupMsg] = useState('');
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, User, Phone, FileText, Search, Eye, Download } from 'lucide-react';
+import { Plus, Pencil, Trash2, User, Phone, FileText, Search, Eye, Download, Loader2 } from 'lucide-react';
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { maskDocument } from "@/lib/formatters";
 import { toCsv } from "@/lib/csv";
