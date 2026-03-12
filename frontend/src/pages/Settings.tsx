@@ -264,10 +264,10 @@ const Settings = () => {
                     key={opt.key}
                     type="button"
                     variant={backupScope === opt.key ? 'default' : 'outline'}
-                    className={`justify-start w-full h-10 border ${opt.hover}`}
+                    className={`justify-start w-full h-10 border ${opt.hover} ${backupScope === opt.key ? 'text-white/90 hover:text-white' : ''}`}
                     onClick={() => setBackupScope(opt.key)}
                   >
-                    <opt.icon className={`h-4 w-4 mr-2 ${backupScope === opt.key ? '' : opt.color}`} />
+                    <opt.icon className={`h-4 w-4 mr-2 ${backupScope === opt.key ? 'text-white/90' : opt.color}`} />
                     {opt.label}
                   </Button>
                 ))}
