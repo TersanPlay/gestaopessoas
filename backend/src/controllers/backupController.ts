@@ -30,6 +30,16 @@ const scopeTables: Record<string, string[]> = {
 
 const getPgBin = () => process.env.PG_BIN_PATH || DEFAULT_PG_BIN;
 
+const guessTablesFromFilename = (file: string) => {
+  const lower = file.toLowerCase();
+  if (lower.includes('visits')) return ['visits', 'visitors'];
+  if (lower.includes('visitors')) return ['visitors'];
+  if (lower.includes('departments')) return ['departments'];
+  if (lower.includes('users')) return ['users'];
+  if (lower.includes('totem')) return ['visits', 'visitors'];
+  return [];
+};
+
 const sanitizeUrl = (url: string) => url.split('?')[0]; // remove query params como schema=public
 
 const buildPgDumpCmd = (scope: string, outFile: string) => {
@@ -86,6 +96,16 @@ export const restoreBackup = async (req: Request, res: Response) => {
     if (!file) return res.status(400).json({ message: 'Arquivo é obrigatório' });
     const fullPath = path.join(BACKUP_DIR, file);
     if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'Arquivo não encontrado' });
+    // Para dumps parciais, limpamos as tabelas relevantes antes do restore (evita PK/FK duplicadas)
+    const tablesToTruncate = guessTablesFromFilename(file);
+    if (tablesToTruncate.length > 0) {
+      const urlRaw = process.env.DATABASE_URL;
+      if (!urlRaw) throw new Error('DATABASE_URL não definido');
+      const url = sanitizeUrl(urlRaw);
+      const bin = getPgBin();
+      const psql = `"${path.join(bin, 'psql.exe')}" "${url}" -c "TRUNCATE ${tablesToTruncate.join(', ')} CASCADE;"`;
+      await execAsync(psql, { env: { ...process.env, PGPASSWORD: process.env.PGPASSWORD || 'PostgreSQL' } });
+    }
     const cmd = buildPgRestoreCmd(fullPath);
     await execAsync(cmd, { env: { ...process.env, PGPASSWORD: process.env.PGPASSWORD || 'PostgreSQL' } });
     res.json({ message: 'Restauração concluída', file });
