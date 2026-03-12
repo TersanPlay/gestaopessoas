@@ -114,3 +114,17 @@ export const restoreBackup = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Erro ao restaurar backup', detail: err?.message });
   }
 };
+
+export const deleteBackup = async (req: Request, res: Response) => {
+  try {
+    const { file } = req.params;
+    if (!file) return res.status(400).json({ message: 'Arquivo é obrigatório' });
+    const fullPath = path.join(BACKUP_DIR, file);
+    if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'Arquivo não encontrado' });
+    fs.unlinkSync(fullPath);
+    res.json({ message: 'Backup removido', file });
+  } catch (err: any) {
+    console.error('Delete backup error', err);
+    res.status(500).json({ message: 'Erro ao remover backup', detail: err?.message });
+  }
+};
