@@ -371,6 +371,30 @@ const Settings = () => {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!confirmDeleteFile} onOpenChange={(open) => !open && setConfirmDeleteFile(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir backup</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setConfirmDeleteFile(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={!!deleteLoading}
+            >
+              {deleteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
