@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Save, Shield, Server, Download, RotateCw } from 'lucide-react';
+import { Loader2, Save, Shield, Server, Download, RotateCw, Trash2 } from 'lucide-react';
 
 const Settings = () => {
   const { user, setUser } = useAuth();
@@ -21,6 +21,7 @@ const Settings = () => {
   const [backupScope, setBackupScope] = useState('full');
   const [backupLoading, setBackupLoading] = useState(false);
   const [restoreLoading, setRestoreLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [backupMsg, setBackupMsg] = useState('');
 
   const [formData, setFormData] = useState({
@@ -127,6 +128,23 @@ const Settings = () => {
       setBackupMsg('Erro ao restaurar backup');
     } finally {
       setRestoreLoading(null);
+    }
+  };
+
+  const handleDelete = async (file: string) => {
+    setDeleteLoading(file);
+    setBackupMsg('');
+    try {
+      const confirmMsg = `Deseja remover o backup "${file}"? Esta ação não poderá ser desfeita.`;
+      if (!window.confirm(confirmMsg)) return;
+      await api.delete(`/backup/${encodeURIComponent(file)}`);
+      setBackupMsg('Backup removido com sucesso');
+      fetchBackups();
+    } catch (err) {
+      console.error(err);
+      setBackupMsg('Erro ao remover backup');
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -320,6 +338,18 @@ const Settings = () => {
                         onClick={() => window.open(`/db/backups/${b.file}`, '_blank')}
                       >
                         <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(b.file)}
+                        disabled={!!deleteLoading}
+                      >
+                        {deleteLoading === b.file ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        )}
                       </Button>
                     </div>
                   </div>
