@@ -50,7 +50,8 @@ const buildPgRestoreCmd = (file: string) => {
   if (!urlRaw) throw new Error('DATABASE_URL não definido');
   const url = sanitizeUrl(urlRaw);
   const bin = getPgBin();
-  return `"${path.join(bin, 'pg_restore.exe')}" -d "${url}" "${file}"`;
+  // --clean remove objetos antes de recriar; --if-exists evita erro se não existirem; --no-owner / --no-privileges para evitar aplicar donos/ACL
+  return `"${path.join(bin, 'pg_restore.exe')}" -c --if-exists --no-owner --no-privileges -d "${url}" "${file}"`;
 };
 
 export const listBackups = async (_req: Request, res: Response) => {
