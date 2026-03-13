@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -10,10 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, UserPlus } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { useAuth } from '../context/AuthContext';
+import { cn } from "@/lib/utils";
 
 interface Visitor {
   id: string;
@@ -27,12 +30,22 @@ interface Department {
   name: string;
 }
 
+const normalizeText = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+const onlyDigits = (value: string) => value.replace(/\D/g, '');
+
 const NewVisit = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isVisitorDialogOpen, setIsVisitorDialogOpen] = useState(false);
+  const [isVisitorPopoverOpen, setIsVisitorPopoverOpen] = useState(false);
+  const [visitorSearch, setVisitorSearch] = useState('');
 
   // Form states
   const [newVisit, setNewVisit] = useState({
@@ -69,6 +82,12 @@ const NewVisit = () => {
 
   const handleCreateVisit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!newVisit.visitorId) {
+      alert('Selecione um visitante');
+      return;
+    }
+
     try {
       await api.post('/visits', newVisit);
       navigate('/visits');
@@ -88,6 +107,14 @@ const NewVisit = () => {
       
       setIsVisitorDialogOpen(false);
   };
+
+  const selectedVisitor = visitors.find((v) => v.id === newVisit.visitorId);
+  const visitorSearchTerm = normalizeText(visitorSearch.trim());
+  const visitorSearchDigits = onlyDigits(visitorSearch);
+  const filteredVisitors = visitors.filter((v) =>
+    normalizeText(v.name).includes(visitorSearchTerm) ||
+    (visitorSearchDigits.length > 0 && onlyDigits(v.document).includes(visitorSearchDigits))
+  );
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
@@ -117,22 +144,72 @@ const NewVisit = () => {
                     Novo Visitante
                 </Button>
             </div>
-            <Select
-              value={newVisit.visitorId}
-              onValueChange={(value) => setNewVisit({ ...newVisit, visitorId: value })}
-              required
+            <Popover
+              open={isVisitorPopoverOpen}
+              onOpenChange={(open) => {
+                setIsVisitorPopoverOpen(open);
+                if (!open) setVisitorSearch('');
+              }}
             >
-              <SelectTrigger id="visitor">
-                <SelectValue placeholder="Selecione um visitante" />
-              </SelectTrigger>
-              <SelectContent>
-                {visitors.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.name} - {v.document}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <PopoverTrigger asChild>
+                <Button
+                  id="visitor"
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isVisitorPopoverOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  <span className="truncate text-left">
+                    {selectedVisitor
+                      ? `${selectedVisitor.name} - ${selectedVisitor.document}`
+                      : 'Selecione um visitante'}
+                  </span>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <div className="border-b p-2">
+                  <Input
+                    value={visitorSearch}
+                    onChange={(e) => setVisitorSearch(e.target.value)}
+                    placeholder="Pesquisar visitante por nome ou CPF..."
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto p-1">
+                  {filteredVisitors.length === 0 ? (
+                    <p className="px-2 py-4 text-sm text-muted-foreground">
+                      Nenhum visitante encontrado.
+                    </p>
+                  ) : (
+                    filteredVisitors.map((v) => (
+                      <Button
+                        key={v.id}
+                        type="button"
+                        variant="ghost"
+                        className={cn(
+                          "h-auto w-full justify-start px-2 py-2 text-left font-normal",
+                          newVisit.visitorId === v.id && "bg-accent"
+                        )}
+                        onClick={() => {
+                          setNewVisit((prev) => ({ ...prev, visitorId: v.id }));
+                          setVisitorSearch('');
+                          setIsVisitorPopoverOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 shrink-0",
+                            newVisit.visitorId === v.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        <span className="truncate">{v.name}</span>
+                      </Button>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="space-y-2">
@@ -159,22 +236,6 @@ const NewVisit = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>Data e Hora</Label>
-            <DateTimePicker 
-              value={newVisit.date ? new Date(newVisit.date) : undefined}
-              onChange={(date) => setNewVisit({ ...newVisit, date: date.toISOString() })}
-              className="border rounded-md w-full max-w-full"
-            />
-            <input 
-              type="hidden" 
-              required 
-              value={newVisit.date} 
-              onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Por favor, selecione data e hora.')}
-              onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="motive">Motivo</Label>
             <Select
               value={newVisit.motive}
@@ -192,6 +253,22 @@ const NewVisit = () => {
                 <SelectItem value="Reunião">Reunião</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Data e Hora</Label>
+            <DateTimePicker 
+              value={newVisit.date ? new Date(newVisit.date) : undefined}
+              onChange={(date) => setNewVisit({ ...newVisit, date: date.toISOString() })}
+              className="border rounded-md w-full max-w-full"
+            />
+            <input 
+              type="hidden" 
+              required 
+              value={newVisit.date} 
+              onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Por favor, selecione data e hora.')}
+              onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

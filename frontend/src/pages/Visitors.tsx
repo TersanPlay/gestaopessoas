@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, User, Phone, FileText, Search, Eye, Download, Loader2 } from 'lucide-react';
+import { Plus, User, Phone, FileText, Search, Download, Loader2 } from 'lucide-react';
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { maskDocument } from "@/lib/formatters";
 import { toCsv } from "@/lib/csv";
@@ -38,7 +38,6 @@ const Visitors = () => {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentVisitor, setCurrentVisitor] = useState<Partial<Visitor>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [phoneFilter, setPhoneFilter] = useState('ALL');
   const [consentFilter, setConsentFilter] = useState('ALL');
@@ -60,42 +59,25 @@ const Visitors = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este visitante?')) return;
-    try {
-      await api.delete(`/visitors/${id}`);
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to delete visitor', error);
-      alert('Erro ao excluir visitante. Verifique se não há visitas vinculadas.');
-    }
-  };
-
   const openNewDialog = () => {
-    setCurrentVisitor({});
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (visitor: Visitor) => {
-    setCurrentVisitor(visitor);
     setIsDialogOpen(true);
   };
 
   const handleSuccess = () => {
     fetchData();
-    setIsDialogOpen(false); // redundant as dialog closes itself but good for safety if needed
+    setIsDialogOpen(false);
   };
 
   const filteredVisitors = visitors.filter(v => {
     const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           v.document.includes(searchTerm);
-    const matchesPhone = phoneFilter === 'ALL' || 
-                         (phoneFilter === 'WITH_PHONE' && v.phone) || 
+    const matchesPhone = phoneFilter === 'ALL' ||
+                         (phoneFilter === 'WITH_PHONE' && v.phone) ||
                          (phoneFilter === 'NO_PHONE' && !v.phone);
     const matchesConsent = consentFilter === 'ALL' ||
                            (consentFilter === 'GIVEN' && v.consentGiven) ||
                            (consentFilter === 'NOT_GIVEN' && !v.consentGiven);
-    
+
     return matchesSearch && matchesPhone && matchesConsent;
   });
 
@@ -161,36 +143,48 @@ const Visitors = () => {
           <SelectContent>
             <SelectItem value="ALL">Todos os status</SelectItem>
             <SelectItem value="GIVEN">Consentimento Aceito</SelectItem>
-            <SelectItem value="NOT_GIVEN">Não Aceito/Pendente</SelectItem>
+            <SelectItem value="NOT_GIVEN">Nao Aceito/Pendente</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-40 rounded-xl bg-muted animate-pulse" />
+            <div key={i} className="h-40 rounded-xl bg-muted animate-pulse md:h-auto md:aspect-square" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filteredVisitors.map((v) => (
-            <Card key={v.id} className="card-corporate overflow-hidden group hover:shadow-lg transition-all duration-300">
-              <CardHeader className="pb-2 bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-16 w-16 border rounded-md overflow-hidden">
+            <Card
+              key={v.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/visitors/${v.id}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/visitors/${v.id}`);
+                }
+              }}
+              className="card-corporate overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col md:aspect-square cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <CardHeader className="bg-muted/30">
+                <div className="flex justify-center">
+                  <Avatar className="h-24 w-24 shrink-0 border rounded-md overflow-hidden">
                     <AvatarImage src={v.photo} alt={v.name} className="object-cover" />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold rounded-md">
+                    <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold rounded-md">
                       {initials(v.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4 text-primary" />
-                    {v.name}
-                  </CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="pt-4 space-y-2 text-sm">
+              <CardContent className="pt-4 space-y-3 text-sm flex-1">
+                <div className="flex items-center gap-2 font-semibold text-foreground">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="truncate">{v.name}</span>
+                </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <FileText className="h-4 w-4" />
                   <span>CPF/RG: {maskDocument(v.document)}</span>
@@ -202,20 +196,9 @@ const Visitors = () => {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="bg-muted/30 p-3 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="sm" onClick={() => navigate(`/visitors/${v.id}`)}>
-                  <Eye className="h-4 w-4 text-green-600" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => openEditDialog(v)}>
-                  <Pencil className="h-4 w-4 text-blue-600" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(v.id)}>
-                  <Trash2 className="h-4 w-4 text-red-600" />
-                </Button>
-              </CardFooter>
             </Card>
           ))}
-          
+
           {filteredVisitors.length === 0 && !loading && (
             <div className="col-span-full text-center py-10 text-muted-foreground">
               Nenhum visitante encontrado.
@@ -224,10 +207,9 @@ const Visitors = () => {
         </div>
       )}
 
-      <VisitorFormDialog 
-        open={isDialogOpen} 
+      <VisitorFormDialog
+        open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        visitorToEdit={currentVisitor}
         onSuccess={handleSuccess}
       />
     </div>

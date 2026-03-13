@@ -32,6 +32,7 @@ const Settings = () => {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [backupMsg, setBackupMsg] = useState('');
   const [confirmDeleteFile, setConfirmDeleteFile] = useState<string | null>(null);
+  const [confirmDeleteText, setConfirmDeleteText] = useState('');
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -142,6 +143,7 @@ const Settings = () => {
 
   const handleDelete = (file: string) => {
     setConfirmDeleteFile(file);
+    setConfirmDeleteText('');
   };
 
   const confirmDelete = async () => {
@@ -158,8 +160,11 @@ const Settings = () => {
     } finally {
       setDeleteLoading(null);
       setConfirmDeleteFile(null);
+      setConfirmDeleteText('');
     }
   };
+
+  const canDeleteBackup = !!confirmDeleteFile && confirmDeleteText === confirmDeleteFile;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -373,7 +378,15 @@ const Settings = () => {
         </Card>
       )}
 
-      <Dialog open={!!confirmDeleteFile} onOpenChange={(open) => !open && setConfirmDeleteFile(null)}>
+      <Dialog
+        open={!!confirmDeleteFile}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmDeleteFile(null);
+            setConfirmDeleteText('');
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Excluir backup</DialogTitle>
@@ -381,14 +394,32 @@ const Settings = () => {
               Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-delete-backup-name">
+              Digite o nome do backup para confirmar
+            </Label>
+            <Input
+              id="confirm-delete-backup-name"
+              value={confirmDeleteText}
+              onChange={(e) => setConfirmDeleteText(e.target.value)}
+              placeholder={confirmDeleteFile || ''}
+              autoComplete="off"
+            />
+          </div>
           <DialogFooter className="flex gap-2">
-            <Button variant="outline" onClick={() => setConfirmDeleteFile(null)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmDeleteFile(null);
+                setConfirmDeleteText('');
+              }}
+            >
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={confirmDelete}
-              disabled={!!deleteLoading}
+              disabled={!!deleteLoading || !canDeleteBackup}
             >
               {deleteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               Excluir
