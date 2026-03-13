@@ -6,8 +6,8 @@ Informações de conexão do PostgreSQL utilizadas pelo projeto.
 - **Porta**: 5433
 - **Banco**: gestao_db
 - **Usuário**: postgres
-- **Senha**: PostgreSQL
-- **URL completa**: `postgresql://postgres:PostgreSQL@localhost:5433/gestao_db?schema=public`
+- **Senha**: Arielam25_
+- **URL completa**: `postgresql://postgres:Arielam25_@localhost:5433/gestao_db?schema=public`
 
 ## Acesso via psql
 ```bash

@@ -1,6 +1,10 @@
 
+> gestao-teste@1.0.0 dev:backend
+> npm run dev --workspace=backend
+
+
 > backend@1.0.0 dev
 > tsx watch src/index.ts
 
-[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
 Server running on port 3000
