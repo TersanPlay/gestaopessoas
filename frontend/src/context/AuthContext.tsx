@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import api from '../services/api';
 
 interface User {
@@ -15,25 +17,34 @@ interface AuthContextData {
   login: (userData: object) => Promise<void>;
   logout: () => void;
   loading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setUser: Dispatch<SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window === 'undefined') return null;
 
-  useEffect(() => {
     const storagedUser = localStorage.getItem('@gestao:user');
     const storagedToken = localStorage.getItem('@gestao:token');
 
-    if (storagedUser && storagedToken) {
-      setUser(JSON.parse(storagedUser));
+    if (storagedToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${storagedToken}`;
     }
-    setLoading(false);
-  }, []);
+
+    if (!storagedUser || !storagedToken) return null;
+
+    try {
+      return JSON.parse(storagedUser) as User;
+    } catch (error) {
+      console.error('Failed to parse stored user session', error);
+      localStorage.removeItem('@gestao:user');
+      localStorage.removeItem('@gestao:token');
+      return null;
+    }
+  });
+  const loading = false;
 
   async function login(userData: object) {
     const response = await api.post('/auth/login', userData);

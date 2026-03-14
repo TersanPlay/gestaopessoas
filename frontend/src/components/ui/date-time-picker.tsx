@@ -38,8 +38,11 @@ export function DateTimePicker({
   // Sync internal state with external value prop
   useEffect(() => {
     if (value) {
-      setSelectedDate(value)
-      setSelectedTime(format(value, 'HH:mm'))
+      const frameId = window.requestAnimationFrame(() => {
+        setSelectedDate(value)
+        setSelectedTime(format(value, 'HH:mm'))
+      })
+      return () => window.cancelAnimationFrame(frameId)
     }
   }, [value])
 
@@ -56,7 +59,7 @@ export function DateTimePicker({
         onChange(newDateTime)
       }
     }
-  }, [selectedDate, selectedTime])
+  }, [selectedDate, selectedTime, onChange, value])
 
   const timeSlots = useMemo(() => {
     const slots = []

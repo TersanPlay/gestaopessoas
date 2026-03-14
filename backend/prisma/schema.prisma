@@ -20,47 +20,92 @@ enum VisitStatus {
   CANCELLED
 }
 
+enum VehicleCategory {
+  OFFICIAL
+  EMPLOYEE
+  VISITOR
+  CONTRACTOR
+}
+
+enum SpotType {
+  CAR
+  MOTORCYCLE
+}
+
+enum SpotStatus {
+  FREE
+  OCCUPIED
+  RESERVED
+  BLOCKED
+  MAINTENANCE
+}
+
+enum MovementStatus {
+  PRESENT
+  FINISHED
+  CANCELLED
+}
+
+enum PhotoType {
+  ENTRY
+  EXIT
+}
+
+enum OccurrenceType {
+  IRREGULAR_PARKING
+  MISSING_DOCUMENT
+  ACCESS_ATTEMPT
+  DAMAGE
+  NOTE
+}
+
 model User {
-  id           String      @id @default(uuid())
-  name         String
-  email        String      @unique
-  password     String
-  role         Role        @default(COLABORADOR)
-  departmentId String?
-  department   Department? @relation(fields: [departmentId], references: [id])
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  hostedVisits Visit[]     @relation("HostVisits")
+  id                    String                        @id @default(uuid())
+  name                  String
+  email                 String                        @unique
+  password              String
+  role                  Role                          @default(COLABORADOR)
+  departmentId          String?
+  department            Department?                   @relation(fields: [departmentId], references: [id])
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  hostedVisits          Visit[]                       @relation("HostVisits")
+  guardhouseEntries     GuardhouseVehicleMovement[]   @relation("GuardhouseEntryBy")
+  guardhouseExits       GuardhouseVehicleMovement[]   @relation("GuardhouseExitBy")
+  guardhouseOccurrences GuardhouseVehicleOccurrence[] @relation("GuardhouseOccurrenceBy")
+  guardhouseBlocks      GuardhouseVehicleBlock[]      @relation("GuardhouseBlockBy")
 
   @@map("users")
 }
 
 model Department {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  responsible String?
-  location    String?
-  users       User[]
-  visits      Visit[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String                      @id @default(uuid())
+  name                String
+  description         String?
+  responsible         String?
+  location            String?
+  users               User[]
+  visits              Visit[]
+  guardhouseDrivers   GuardhouseDriver[]
+  guardhouseMovements GuardhouseVehicleMovement[] @relation("GuardhouseDestination")
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
 
   @@map("departments")
 }
 
 model Visitor {
-  id        String   @id @default(uuid())
-  name      String
-  document  String   @unique
-  phone     String?
-  photo     String?
+  id            String    @id @default(uuid())
+  name          String
+  document      String    @unique
+  phone         String?
+  photo         String?
   faceEmbedding Json?
-  consentGiven Boolean  @default(false)
-  consentDate  DateTime?
-  visits    Visit[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  consentGiven  Boolean   @default(false)
+  consentDate   DateTime?
+  visits        Visit[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@map("visitors")
 }
@@ -72,20 +117,152 @@ model Visit {
   motive       String?
   checkInTime  DateTime?
   checkOutTime DateTime?
-  
-  accessCode   String?
-  
-  visitorId    String
-  visitor      Visitor     @relation(fields: [visitorId], references: [id])
-  
+
+  accessCode String?
+
+  visitorId String
+  visitor   Visitor @relation(fields: [visitorId], references: [id])
+
   departmentId String
-  department   Department  @relation(fields: [departmentId], references: [id])
-  
-  hostId       String?
-  host         User?       @relation("HostVisits", fields: [hostId], references: [id])
-  
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  hostId String?
+  host   User?   @relation("HostVisits", fields: [hostId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("visits")
+}
+
+model GuardhouseVehicle {
+  id              String                      @id @default(uuid())
+  plate           String                      @unique
+  category        VehicleCategory             @default(VISITOR)
+  vehicleType     SpotType                    @default(CAR)
+  photo           String?
+  brand           String?
+  model           String?
+  color           String?
+  manufactureYear Int?
+  sourceAgency    String?
+  notes           String?
+  isActive        Boolean                     @default(true)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  movements       GuardhouseVehicleMovement[]
+  blocks          GuardhouseVehicleBlock[]
+
+  @@index([plate])
+  @@map("guardhouse_vehicles")
+}
+
+model GuardhouseDriver {
+  id           String                      @id @default(uuid())
+  fullName     String
+  document     String?                     @unique
+  phone        String?
+  category     VehicleCategory             @default(VISITOR)
+  departmentId String?
+  department   Department?                 @relation(fields: [departmentId], references: [id])
+  notes        String?
+  isActive     Boolean                     @default(true)
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+  movements    GuardhouseVehicleMovement[]
+
+  @@index([fullName])
+  @@map("guardhouse_drivers")
+}
+
+model GuardhouseParkingSpot {
+  id        String                      @id @default(uuid())
+  code      String                      @unique
+  spotType  SpotType
+  sector    String?
+  status    SpotStatus                  @default(FREE)
+  notes     String?
+  isActive  Boolean                     @default(true)
+  createdAt DateTime                    @default(now())
+  updatedAt DateTime                    @updatedAt
+  movements GuardhouseVehicleMovement[]
+
+  @@index([spotType, status])
+  @@map("guardhouse_parking_spots")
+}
+
+model GuardhouseVehicleMovement {
+  id                      String                        @id @default(uuid())
+  vehicleId               String
+  vehicle                 GuardhouseVehicle             @relation(fields: [vehicleId], references: [id])
+  driverId                String?
+  driver                  GuardhouseDriver?             @relation(fields: [driverId], references: [id])
+  spotId                  String
+  spot                    GuardhouseParkingSpot         @relation(fields: [spotId], references: [id])
+  destinationDepartmentId String?
+  destinationDepartment   Department?                   @relation("GuardhouseDestination", fields: [destinationDepartmentId], references: [id])
+  accessCategory          VehicleCategory
+  visitReason             String?
+  entryAt                 DateTime                      @default(now())
+  exitAt                  DateTime?
+  durationMinutes         Int?
+  status                  MovementStatus                @default(PRESENT)
+  entryNotes              String?
+  exitNotes               String?
+  registeredByEntryId     String
+  registeredByEntry       User                          @relation("GuardhouseEntryBy", fields: [registeredByEntryId], references: [id])
+  registeredByExitId      String?
+  registeredByExit        User?                         @relation("GuardhouseExitBy", fields: [registeredByExitId], references: [id])
+  createdAt               DateTime                      @default(now())
+  updatedAt               DateTime                      @updatedAt
+  photos                  GuardhouseMovementPhoto[]
+  occurrences             GuardhouseVehicleOccurrence[]
+
+  @@index([status, entryAt])
+  @@index([vehicleId, status])
+  @@index([spotId, status])
+  @@map("guardhouse_vehicle_movements")
+}
+
+model GuardhouseMovementPhoto {
+  id          String                    @id @default(uuid())
+  movementId  String
+  movement    GuardhouseVehicleMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  photoType   PhotoType
+  filePath    String
+  description String?
+  createdAt   DateTime                  @default(now())
+
+  @@index([movementId, photoType])
+  @@map("guardhouse_movement_photos")
+}
+
+model GuardhouseVehicleOccurrence {
+  id             String                    @id @default(uuid())
+  movementId     String
+  movement       GuardhouseVehicleMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  occurrenceType OccurrenceType
+  description    String
+  registeredById String
+  registeredBy   User                      @relation("GuardhouseOccurrenceBy", fields: [registeredById], references: [id])
+  createdAt      DateTime                  @default(now())
+
+  @@index([movementId, occurrenceType])
+  @@map("guardhouse_vehicle_occurrences")
+}
+
+model GuardhouseVehicleBlock {
+  id             String            @id @default(uuid())
+  vehicleId      String
+  vehicle        GuardhouseVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  reason         String
+  startAt        DateTime          @default(now())
+  endAt          DateTime?
+  isActive       Boolean           @default(true)
+  registeredById String
+  registeredBy   User              @relation("GuardhouseBlockBy", fields: [registeredById], references: [id])
+  createdAt      DateTime          @default(now())
+
+  @@index([vehicleId, isActive])
+  @@map("guardhouse_vehicle_blocks")
 }

@@ -41,6 +41,11 @@ const guessTablesFromFilename = (file: string) => {
 };
 
 const sanitizeUrl = (url: string) => url.split('?')[0]; // remove query params como schema=public
+const asSingleString = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return undefined;
+};
 
 const buildPgDumpCmd = (scope: string, outFile: string) => {
   const urlRaw = process.env.DATABASE_URL;
@@ -92,7 +97,7 @@ export const createBackup = async (req: Request, res: Response) => {
 
 export const restoreBackup = async (req: Request, res: Response) => {
   try {
-    const { file } = req.body;
+    const file = asSingleString(req.body?.file);
     if (!file) return res.status(400).json({ message: 'Arquivo é obrigatório' });
     const fullPath = path.join(BACKUP_DIR, file);
     if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'Arquivo não encontrado' });
@@ -117,7 +122,7 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const deleteBackup = async (req: Request, res: Response) => {
   try {
-    const { file } = req.params;
+    const file = asSingleString(req.params.file);
     if (!file) return res.status(400).json({ message: 'Arquivo é obrigatório' });
     const fullPath = path.join(BACKUP_DIR, file);
     if (!fs.existsSync(fullPath)) return res.status(404).json({ message: 'Arquivo não encontrado' });

@@ -9,11 +9,13 @@ import api from '@/services/api';
 // CDN oficial do face-api.js com pesos públicos
 const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
 
+type FaceApiModule = typeof import('face-api.js');
+
 export default function TotemFace() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const faceapiRef = useRef<any>(null);
+  const faceapiRef = useRef<FaceApiModule | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'detecting' | 'success' | 'fail'>('idle');
   const [attempts, setAttempts] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +58,10 @@ export default function TotemFace() {
       }
       streamRef.current = stream;
       // Delay to allow camera to settle
-      setTimeout(runDetection, 400);
-    } catch (err: any) {
+      setTimeout(() => {
+        void runDetection();
+      }, 400);
+    } catch (err) {
       console.error('Erro ao acessar câmera', err);
       setError('Não foi possível acessar a câmera. Verifique permissões ou se outro app está usando.');
       setStatus('fail');
@@ -198,3 +202,5 @@ export default function TotemFace() {
     </TotemLayout>
   );
 }
+
+

@@ -60,14 +60,7 @@ const NewVisit = () => {
     setNewVisit(prev => ({ ...prev, departmentId: value }));
   };
 
-  useEffect(() => {
-    fetchData();
-    if (user?.role === 'COLABORADOR' && user.departmentId) {
-        setNewVisit(prev => ({ ...prev, departmentId: user.departmentId! }));
-    }
-  }, [user]);
-
-  const fetchData = async () => {
+  async function fetchData() {
     try {
       const [visitorsRes, departmentsRes] = await Promise.all([
         api.get('/visitors'),
@@ -78,7 +71,18 @@ const NewVisit = () => {
     } catch (error) {
       console.error('Failed to fetch data', error);
     }
-  };
+  }
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      void fetchData();
+      if (user?.role === 'COLABORADOR' && user.departmentId) {
+        setNewVisit(prev => ({ ...prev, departmentId: user.departmentId ?? '' }));
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [user]);
 
   const handleCreateVisit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,3 +293,4 @@ const NewVisit = () => {
 };
 
 export default NewVisit;
+

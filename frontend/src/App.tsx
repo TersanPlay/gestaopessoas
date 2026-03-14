@@ -14,6 +14,13 @@ import Agenda from './pages/Agenda';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Privacy from './pages/Privacy';
+import GuardhouseDashboard from './pages/guardhouse/GuardhouseDashboard';
+import GuardhouseEntry from './pages/guardhouse/GuardhouseEntry';
+import GuardhouseExit from './pages/guardhouse/GuardhouseExit';
+import GuardhouseVehicles from './pages/guardhouse/GuardhouseVehicles';
+import GuardhouseMovements from './pages/guardhouse/GuardhouseMovements';
+import GuardhouseVehicleDetails from './pages/guardhouse/GuardhouseVehicleDetails';
+import GuardhouseReports from './pages/guardhouse/GuardhouseReports';
 import TotemWelcome from './pages/totem/TotemWelcome';
 import TotemFace from './pages/totem/TotemFace';
 import TotemIdentify from './pages/totem/TotemIdentify';
@@ -126,6 +133,53 @@ function App() {
              } />
              
              <Route path="/calendar" element={<Agenda />} />
+
+             <Route path="/guardhouse" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <Navigate to="/guardhouse/dashboard" replace />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <Navigate to="/guardhouse/dashboard" replace />
+               </RoleRoute>
+             } />
+
+             <Route path="/guardhouse/dashboard" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseDashboard />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/entry" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA']}>
+                 <GuardhouseEntry />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/exit" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseExit />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/movements" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseMovements />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/vehicles" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseVehicles />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/vehicles/:id" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseVehicleDetails />
+               </RoleRoute>
+             } />
+             <Route path="/guardhouse/reports" element={
+               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA', 'COLABORADOR']}>
+                 <GuardhouseReports />
+               </RoleRoute>
+             } />
              
              <Route path="/settings" element={
                <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA']}>

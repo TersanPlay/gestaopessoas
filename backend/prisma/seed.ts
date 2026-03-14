@@ -26,6 +26,25 @@ async function main() {
     },
   })
 
+  const carSpots = Array.from({ length: 30 }, (_, index) => ({
+    code: `A${index + 1}`,
+    spotType: 'CAR' as const,
+    status: 'FREE' as const,
+    sector: 'Principal',
+  }))
+
+  const motorcycleSpots = Array.from({ length: 30 }, (_, index) => ({
+    code: `M${index + 1}`,
+    spotType: 'MOTORCYCLE' as const,
+    status: 'FREE' as const,
+    sector: 'Principal',
+  }))
+
+  await prisma.guardhouseParkingSpot.createMany({
+    data: [...carSpots, ...motorcycleSpots],
+    skipDuplicates: true,
+  })
+
   console.log({ admin })
 }
 

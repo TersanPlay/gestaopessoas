@@ -86,11 +86,11 @@ const Visits = () => {
     setIsVisitorDialogOpen(false);
   };
 
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = async (id: string, status: Visit['status']) => {
     try {
       await api.patch(`/visits/${id}/status`, { status });
       // Optimistic update
-      setVisits(visits.map(v => v.id === id ? { ...v, status: status as any } : v));
+      setVisits(visits.map(v => v.id === id ? { ...v, status } : v));
     } catch (error) {
       console.error('Failed to update status', error);
       alert('Erro ao atualizar status');
@@ -158,7 +158,7 @@ const Visits = () => {
 
   const handleConfirmAction = async () => {
     if (confirmation.visitId && confirmation.type) {
-      let status = '';
+      let status: Visit['status'] | null = null;
       if (confirmation.type === 'CANCEL') status = 'CANCELLED';
       else if (confirmation.type === 'CHECKIN') status = 'CHECKIN';
       else if (confirmation.type === 'CHECKOUT') status = 'CHECKOUT';
@@ -389,3 +389,4 @@ const Visits = () => {
 };
 
 export default Visits;
+

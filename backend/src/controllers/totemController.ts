@@ -2,6 +2,12 @@ import { Request, Response } from 'express';
 import prisma from '../utils/prisma.js';
 import { distance } from '../utils/vector.js';
 
+const asSingleString = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+  return undefined;
+};
+
 export const getVisitorByCpf = async (req: Request, res: Response) => {
   try {
     const { cpf } = req.params;
@@ -103,7 +109,7 @@ export const createVisit = async (req: Request, res: Response) => {
 
 export const getActiveVisits = async (req: Request, res: Response) => {
     try {
-        const { identifier } = req.params;
+        const identifier = asSingleString(req.params.identifier);
 
         if (!identifier) {
             return res.status(400).json({ message: 'Identifier is required' });
@@ -211,7 +217,6 @@ export const faceMatch = async (req: Request, res: Response) => {
         }
 
         const visitors = await prisma.visitor.findMany({
-            where: { faceEmbedding: { not: null } },
             select: { id: true, name: true, document: true, photo: true, faceEmbedding: true }
         });
 

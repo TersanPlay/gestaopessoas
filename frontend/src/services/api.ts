@@ -14,12 +14,14 @@ api.interceptors.request.use((config) => {
 
 export default api;
 
+type ReportQueryParams = Record<string, string | number | boolean | null | undefined>;
+
 export const reportsService = {
-  getVisits: async (params: any) => {
+  getVisits: async (params: ReportQueryParams) => {
     const response = await api.get('/reports/visits', { params });
     return response.data;
   },
-  getStats: async (params: any) => {
+  getStats: async (params: ReportQueryParams) => {
     const response = await api.get('/reports/stats', { params });
     return response.data;
   }

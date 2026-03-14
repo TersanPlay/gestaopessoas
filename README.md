@@ -66,7 +66,15 @@ Credenciais seed: `admin@gestao.com` / `admin123`.
 - `npm run dev:backend` – API com hot reload.
 - `npm run dev:frontend` – SPA/totem com HMR.
 - `npm run build` – build de ambos workspaces.
+- `npm run verify` – valida dependências + Prisma + build completo.
+- `npm run verify:deps` – detecta dependências quebradas/inválidas no monorepo.
+- `npm run verify:prisma` – valida schema Prisma antes de gerar migration.
 - `npx prisma studio --schema backend/prisma/schema.prisma` – UI do banco.
+
+## Validação antes de push
+1. `npm run verify`
+2. `npm run lint --workspace=frontend` (opcional no estado atual, recomendado após correção do backlog de lint)
+3. CI automático em `.github/workflows/ci-verify.yml` para `pull_request` e `push` (main/master)
 
 ## Segurança e Privacidade
 - Uso de dados biométricos requer consentimento (`consentGiven`).

@@ -9,7 +9,15 @@
   "scripts": {
     "dev:backend": "npm run dev --workspace=backend",
     "dev:frontend": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "verify:deps": "npm ls --workspaces --depth=0",
+    "verify:prisma": "npm run prisma:validate --workspace=backend",
+    "verify:build": "npm run build",
+    "verify": "npm run verify:deps && npm run verify:prisma && npm run verify:build"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
   },
   "devDependencies": {
     "tsx": "^4.21.0"

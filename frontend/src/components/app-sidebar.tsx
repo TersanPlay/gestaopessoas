@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Calendar, Home, Inbox, Settings, User2, LogOut, Users as UsersIcon, ClipboardList, Command, ChevronsUpDown, User, Monitor, FileBarChart, PlusCircle } from "lucide-react"
+import { Calendar, Home, Inbox, Settings, User2, LogOut, Users as UsersIcon, ClipboardList, Command, ChevronsUpDown, User, Monitor, FileBarChart, PlusCircle, Shield } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import {
   DropdownMenu,
@@ -31,6 +31,11 @@ const MENU_ITEMS = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Guarita",
+    url: "/guardhouse/dashboard",
+    icon: Shield,
   },
   {
     title: "Relatórios",
@@ -78,12 +83,19 @@ export function AppSidebar() {
   const { user, logout } = useAuth()
   const location = useLocation()
 
+  const isRouteActive = (url: string) => {
+    if (url === '/guardhouse/dashboard') {
+      return location.pathname.startsWith('/guardhouse')
+    }
+    return location.pathname === url
+  }
+
   const userInitials = useMemo(() => {
     if (!user?.name) return 'U'
     const names = user.name.split(' ')
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase()
     return (names[0][0] + names[names.length - 1][0]).toUpperCase()
-  }, [user?.name])
+  }, [user])
 
   const filteredItems = useMemo(() => {
     // Clone items
@@ -146,7 +158,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === item.url}
+                    isActive={isRouteActive(item.url)}
                     tooltip={item.title}
                   >
                     <Link to={item.url}>

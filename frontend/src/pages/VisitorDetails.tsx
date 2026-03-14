@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,7 @@ const VisitorDetails = () => {
   const [showPhotoAction, setShowPhotoAction] = useState(false);
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
 
-  useEffect(() => {
-    fetchVisitorDetails();
-  }, [id]);
-
-  const fetchVisitorDetails = async () => {
+  const fetchVisitorDetails = useCallback(async () => {
     try {
       const response = await api.get(`/visitors/${id}`);
       setVisitor(response.data);
@@ -53,9 +49,13 @@ const VisitorDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleEditSuccess = (updatedVisitor: any) => {
+  useEffect(() => {
+    fetchVisitorDetails();
+  }, [fetchVisitorDetails]);
+
+  const handleEditSuccess = (updatedVisitor: Partial<VisitorDetails>) => {
     // Update local state with new details, preserving visits history
     if (visitor) {
       setVisitor({
@@ -249,3 +249,4 @@ const VisitorDetails = () => {
 };
 
 export default VisitorDetails;
+

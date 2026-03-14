@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,16 +59,7 @@ const Users = () => {
     return matchesSearch && matchesRole && matchesDept;
   });
 
-  // Redirect if not admin
-  if (user?.role !== 'ADMIN') {
-    return <div className="p-4 text-center text-muted-foreground">Acesso restrito a administradores.</div>;
-  }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [usersRes, deptsRes] = await Promise.all([
@@ -82,7 +73,20 @@ const Users = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      fetchData();
+      return;
+    }
+    setLoading(false);
+  }, [fetchData, user?.role]);
+
+  // Redirect if not admin
+  if (user?.role !== 'ADMIN') {
+    return <div className="p-4 text-center text-muted-foreground">Acesso restrito a administradores.</div>;
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,7 +280,7 @@ const Users = () => {
               <Label htmlFor="role">Função</Label>
               <Select
                 value={currentUser.role}
-                onValueChange={(value) => setCurrentUser({ ...currentUser, role: value as any })}
+                onValueChange={(value: User['role']) => setCurrentUser({ ...currentUser, role: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma função" />
@@ -323,3 +327,4 @@ const Users = () => {
 };
 
 export default Users;
+

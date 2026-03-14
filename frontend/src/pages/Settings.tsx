@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,12 @@ const Settings = () => {
     confirmPassword: ''
   });
 
+  type ProfileUpdatePayload = {
+    name: string;
+    email: string;
+    password?: string;
+  };
+
   const userInitials = useMemo(() => {
     if (!user?.name) return 'U';
     const names = user.name.split(' ');
@@ -61,13 +67,13 @@ const Settings = () => {
     setError('');
 
     if (formData.password && formData.password !== formData.confirmPassword) {
-      setError('As senhas nÃ£o coincidem');
+      setError('As senhas não coincidem');
       return;
     }
 
     setLoading(true);
     try {
-      const data: any = {
+      const data: ProfileUpdatePayload = {
         name: formData.name,
         email: formData.email
       };
@@ -91,7 +97,7 @@ const Settings = () => {
     }
   };
 
-  const fetchBackups = async () => {
+  const fetchBackups = useCallback(async () => {
     if (!isAdmin) return;
     try {
       const response = await api.get('/backup/list');
@@ -100,11 +106,11 @@ const Settings = () => {
       console.error(err);
       setBackupMsg('Erro ao listar backups');
     }
-  };
+  }, [isAdmin]);
 
   useEffect(() => {
     fetchBackups();
-  }, [isAdmin]);
+  }, [fetchBackups]);
 
   const humanSize = (size: number) => {
     if (size > 1_000_000) return (size / 1_000_000).toFixed(1) + ' MB';
@@ -132,7 +138,7 @@ const Settings = () => {
     setBackupMsg('');
     try {
       await api.post('/backup/restore', { file });
-      setBackupMsg('RestauraÃ§Ã£o concluÃ­da');
+      setBackupMsg('Restauração concluída');
     } catch (err) {
       console.error(err);
       setBackupMsg('Erro ao restaurar backup');
@@ -170,8 +176,8 @@ const Settings = () => {
     <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">ConfiguraÃ§Ãµes</h1>
-          <p className="text-muted-foreground">Gerencie suas informaÃ§Ãµes pessoais e seguranÃ§a.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground">Gerencie suas informações pessoais e segurança.</p>
         </div>
         <div className="inline-flex items-center rounded-lg border bg-card p-1 gap-1">
           <Button variant={tab === 'profile' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('profile')}>
@@ -189,7 +195,7 @@ const Settings = () => {
         <Card>
           <CardHeader>
             <CardTitle>Perfil</CardTitle>
-            <CardDescription>Atualize suas informaÃ§Ãµes de contato e senha.</CardDescription>
+            <CardDescription>Atualize suas informações de contato e senha.</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
@@ -261,7 +267,7 @@ const Settings = () => {
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Salvar AlteraÃ§Ãµes
+                    Salvar Alterações
                   </>
                 )}
               </Button>
@@ -274,9 +280,9 @@ const Settings = () => {
         <Card className="border-2 border-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> Backup & RestauraÃ§Ã£o
+              <Shield className="h-5 w-5 text-primary" /> Backup & Restauração
             </CardTitle>
-            <CardDescription>DisponÃ­vel apenas para administradores.</CardDescription>
+            <CardDescription>Disponível apenas para administradores.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {backupMsg && (
@@ -293,7 +299,7 @@ const Settings = () => {
                   { key: 'visits', label: 'Visitas', icon: RotateCw, color: 'text-emerald-600', hover: 'hover:bg-emerald-50 hover:border-emerald-200' },
                   { key: 'visitors', label: 'Visitantes', icon: Server, color: 'text-blue-600', hover: 'hover:bg-blue-50 hover:border-blue-200' },
                   { key: 'departments', label: 'Departamentos', icon: Download, color: 'text-amber-600', hover: 'hover:bg-amber-50 hover:border-amber-200' },
-                  { key: 'users', label: 'UsuÃ¡rios', icon: Save, color: 'text-rose-600', hover: 'hover:bg-rose-50 hover:border-rose-200' },
+                  { key: 'users', label: 'Usuários', icon: Save, color: 'text-rose-600', hover: 'hover:bg-rose-50 hover:border-rose-200' },
                   { key: 'totem', label: 'Totem', icon: Server, color: 'text-slate-600', hover: 'hover:bg-slate-50 hover:border-slate-200' },
                 ].map((opt) => (
                   <Button
@@ -333,7 +339,7 @@ const Settings = () => {
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground break-all">{b.file}</span>
                       <span className="text-muted-foreground text-xs">
-                        {new Date(b.modified).toLocaleString()} â€¢ {humanSize(b.size)}
+                        {new Date(b.modified).toLocaleString()} • {humanSize(b.size)}
                       </span>
                     </div>
                     <div className="flex gap-2">
@@ -391,7 +397,7 @@ const Settings = () => {
           <DialogHeader>
             <DialogTitle>Excluir backup</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+              Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -432,3 +438,4 @@ const Settings = () => {
 };
 
 export default Settings;
+

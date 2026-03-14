@@ -89,7 +89,8 @@ export default function TotemFinish() {
         } else {
             setActiveVisits(response.data);
         }
-    } catch (err: any) {
+    } catch (error) {
+         console.error('Erro ao buscar visitas ativas', error);
          setError('Erro ao buscar visitas. Tente novamente.');
     } finally {
         setLoading(false);
@@ -102,7 +103,8 @@ export default function TotemFinish() {
         const response = await api.post('/totem/visits/finish', { id: visitId });
         setFinishedVisit(response.data);
         setSuccess(true);
-    } catch (err: any) {
+    } catch (error) {
+        console.error('Erro ao finalizar visita', error);
         setError('Erro ao finalizar visita. Tente novamente.');
     } finally {
         setLoading(false);
@@ -212,3 +214,4 @@ export default function TotemFinish() {
     </TotemLayout>
   );
 }
+

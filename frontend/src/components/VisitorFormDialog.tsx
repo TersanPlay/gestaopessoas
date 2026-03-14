@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,8 @@ interface VisitorFormDialogProps {
   onSuccess?: (visitor: Visitor) => void;
 }
 
+type FaceApiModule = typeof import('face-api.js');
+
 const DEFAULT_VISITOR: Partial<Visitor> = {};
 
 export function VisitorFormDialog({ 
@@ -48,7 +50,7 @@ export function VisitorFormDialog({
   const [faceEmbedding, setFaceEmbedding] = useState<number[] | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const faceapiRef = useRef<any>(null);
+  const faceapiRef = useRef<FaceApiModule | null>(null);
   const [modelsReady, setModelsReady] = useState(false);
 
   useEffect(() => {
@@ -96,11 +98,12 @@ export function VisitorFormDialog({
       streamRef.current = stream;
       setCameraOpen(true);
       attachStreamToVideo(stream);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erro ao acessar webcam', err);
-      if (err?.name === 'NotReadableError') {
+      const errorName = err instanceof Error ? err.name : undefined;
+      if (errorName === 'NotReadableError') {
         alert('A câmera já está sendo usada por outro aplicativo ou aba. Feche-o e tente novamente.');
-      } else if (err?.name === 'NotAllowedError') {
+      } else if (errorName === 'NotAllowedError') {
         alert('Permissão de câmera negada. Autorize o acesso à webcam e tente novamente.');
       } else {
         alert('Não foi possível acessar a webcam. Verifique as permissões ou tente novamente.');
@@ -149,7 +152,7 @@ export function VisitorFormDialog({
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!formData.id && !consent) {
@@ -320,3 +323,4 @@ export function VisitorFormDialog({
     </Dialog>
   );
 }
+

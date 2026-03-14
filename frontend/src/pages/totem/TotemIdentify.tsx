@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { TotemLayout } from './TotemLayout';
 import { VirtualKeypad } from '@/components/totem/VirtualKeypad';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -73,8 +74,8 @@ export default function TotemIdentify() {
         const response = await api.get(`/totem/visitors/${cleanValues}`); // Assuming clean
         
         navigate('/totem/visitor-data', { state: { visitor: response.data, faceVerified, facePhoto } });
-    } catch (err: any) {
-        if (err.response?.status === 404) {
+    } catch (error) {
+        if (isAxiosError(error) && error.response?.status === 404) {
             setError('CPF não encontrado. Por favor, dirija-se à recepção para realizar o cadastro.');
         } else {
             setError('Erro ao verificar CPF. Tente novamente.');
