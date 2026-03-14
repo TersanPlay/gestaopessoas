@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -87,7 +87,7 @@ const isCompletedStatus = (status: VisitStatus) => status === 'CHECKIN' || statu
 
 const statusLabel = (status: VisitStatus) => {
   if (status === 'CHECKIN') return 'Em andamento';
-  if (status === 'CHECKOUT') return 'Concluída';
+  if (status === 'CHECKOUT') return 'ConcluÃ­da';
   if (status === 'PENDING') return 'Pendente';
   return 'Cancelada';
 };
@@ -139,8 +139,8 @@ export default function Reports() {
       setReportData(visitsData);
       setCurrentPage(1);
     } catch (error) {
-      console.error("Erro ao gerar relatório", error);
-      alert("Erro ao gerar relatório");
+      console.error("Erro ao gerar relatÃ³rio", error);
+      alert("Erro ao gerar relatÃ³rio");
     } finally {
       setLoading(false);
     }
@@ -225,7 +225,7 @@ export default function Reports() {
     if (visit.status === 'PENDING') currentDepartment.pending += 1;
     departmentsMap.set(departmentName, currentDepartment);
 
-    const hostName = visit.host?.name || 'Sem anfitrião';
+    const hostName = visit.host?.name || 'Sem anfitriÃ£o';
     hostsMap.set(hostName, (hostsMap.get(hostName) ?? 0) + 1);
 
     const weekdayIndex = normalizeDayIndex(visitDate.getDay());
@@ -286,7 +286,7 @@ export default function Reports() {
   const handleExportCSV = () => {
     if (reportData.length === 0) return;
 
-    const headers = ["Data/Hora", "Visitante", "Documento", "Departamento", "Anfitrião", "Status"];
+    const headers = ["Data/Hora", "Visitante", "Documento", "Departamento", "AnfitriÃ£o", "Status"];
     const rows = reportData.map((visit) => [
       new Date(visit.date).toLocaleString('pt-BR'),
       visit.visitor.name,
@@ -411,10 +411,10 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gradient flex items-center gap-2">
-            <FileBarChart className="h-8 w-8" /> Dashboard Analítico de Visitas
+            <FileBarChart className="h-8 w-8" /> Dashboard AnalÃ­tico de Visitas
           </h1>
           <p className="text-muted-foreground mt-1">
-            Painel consolidado com indicadores, gráficos e tabelas para análise do fluxo institucional.
+            Painel consolidado com indicadores, grÃ¡ficos e tabelas para anÃ¡lise do fluxo institucional.
           </p>
         </div>
       </div>
@@ -422,12 +422,12 @@ export default function Reports() {
       <Card className="sticky top-2 z-30 border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" /> Filtros e Segmentação
+            <Filter className="h-5 w-5" /> Filtros e SegmentaÃ§Ã£o
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4 items-end">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Período</label>
+            <label className="text-sm font-medium">PerÃ­odo</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -488,80 +488,88 @@ export default function Reports() {
                 <SelectItem value="ALL">Todos</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>
                 <SelectItem value="CHECKIN">Em andamento</SelectItem>
-                <SelectItem value="CHECKOUT">Concluída</SelectItem>
+                <SelectItem value="CHECKOUT">ConcluÃ­da</SelectItem>
                 <SelectItem value="CANCELLED">Cancelada</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <Button onClick={handleGenerateReport} disabled={loading} className="w-full">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Atualizar análise"}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Atualizar anÃ¡lise"}
           </Button>
         </CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Total de visitas</span>
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-            <p className="text-3xl font-bold mt-2">{totalVisits}</p>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total de visitas</CardTitle>
+            <Users className="h-4 w-4 text-indigo-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{totalVisits}</div>
+            <p className="text-xs text-muted-foreground mt-1">No periodo filtrado</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Taxa de conclusão</span>
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-            </div>
-            <p className="text-3xl font-bold mt-2">{completionRate.toFixed(1)}%</p>
-            <p className="text-xs text-muted-foreground mt-1">{completedVisits} concluídas de {totalVisits}</p>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Taxa de conclusao</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{completionRate.toFixed(1)}%</div>
+            <p className="text-xs text-muted-foreground mt-1">{completedVisits} concluidas de {totalVisits}</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Média diária</span>
-              <Clock3 className="h-4 w-4 text-sky-600" />
-            </div>
-            <p className="text-3xl font-bold mt-2">{averagePerDay.toFixed(1)}</p>
-            <p className="text-xs text-muted-foreground mt-1">visitas/dia no período</p>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Media diaria</CardTitle>
+            <Clock3 className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{averagePerDay.toFixed(1)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Visitas por dia no periodo</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Canceladas</span>
-              <span className="text-xs font-medium text-red-600">{totalVisits > 0 ? ((cancelledVisits / totalVisits) * 100).toFixed(1) : "0.0"}%</span>
-            </div>
-            <p className="text-3xl font-bold mt-2 text-red-700">{cancelledVisits}</p>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-red-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Canceladas</CardTitle>
+            <FileText className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{cancelledVisits}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {totalVisits > 0 ? ((cancelledVisits / totalVisits) * 100).toFixed(1) : "0.0"}% do total
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Departamento líder</span>
-              <Building2 className="h-4 w-4 text-amber-600" />
-            </div>
-            <p className="text-lg font-bold mt-2 truncate">{departmentSummary[0]?.name || '-'}</p>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-amber-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Departamento lider</CardTitle>
+            <Building2 className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold text-gray-900 truncate">{departmentSummary[0]?.name || "-"}</div>
             <p className="text-xs text-muted-foreground mt-1">{departmentSummary[0]?.total || 0} visitas</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Maior fluxo semanal</span>
-              <Clock3 className="h-4 w-4 text-violet-600" />
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Maior fluxo semanal</CardTitle>
+            <Clock3 className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-lg font-bold text-gray-900">
+              {peakWeekday?.day || "-"} • {String(peakHour?.hour ?? 0).padStart(2, "0")}h
             </div>
-            <p className="text-lg font-bold mt-2">{peakWeekday?.day || '-'} • {String(peakHour?.hour ?? 0).padStart(2, '0')}h</p>
-            <p className="text-xs text-muted-foreground mt-1">{peakWeekday?.total || 0} visitas no dia mais movimentado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {peakWeekday?.total || 0} visitas no dia mais movimentado
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -569,11 +577,11 @@ export default function Reports() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Visitas por período</CardTitle>
+            <CardTitle>Visitas por perÃ­odo</CardTitle>
             <div className="flex items-center gap-1 rounded-md border p-1">
               <Button type="button" size="sm" variant={groupMode === 'day' ? 'default' : 'ghost'} onClick={() => setGroupMode('day')}>Dia</Button>
               <Button type="button" size="sm" variant={groupMode === 'week' ? 'default' : 'ghost'} onClick={() => setGroupMode('week')}>Semana</Button>
-              <Button type="button" size="sm" variant={groupMode === 'month' ? 'default' : 'ghost'} onClick={() => setGroupMode('month')}>Mês</Button>
+              <Button type="button" size="sm" variant={groupMode === 'month' ? 'default' : 'ghost'} onClick={() => setGroupMode('month')}>MÃªs</Button>
             </div>
           </CardHeader>
           <CardContent className="h-[320px]">
@@ -585,7 +593,7 @@ export default function Reports() {
                 <Tooltip />
                 <Legend />
                 <Area type="monotone" dataKey="total" name="Total" stroke="#2563eb" fill="#93c5fd" fillOpacity={0.35} />
-                <Area type="monotone" dataKey="completed" name="Concluídas" stroke="#16a34a" fill="#86efac" fillOpacity={0.25} />
+                <Area type="monotone" dataKey="completed" name="ConcluÃ­das" stroke="#16a34a" fill="#86efac" fillOpacity={0.25} />
                 <Area type="monotone" dataKey="cancelled" name="Canceladas" stroke="#dc2626" fill="#fecaca" fillOpacity={0.25} />
               </AreaChart>
             </ResponsiveContainer>
@@ -594,7 +602,7 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Evolução temporal (dia a dia)</CardTitle>
+            <CardTitle>EvoluÃ§Ã£o temporal (dia a dia)</CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -632,7 +640,7 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Horários de maior fluxo (semana)</CardTitle>
+            <CardTitle>HorÃ¡rios de maior fluxo (semana)</CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -650,7 +658,7 @@ export default function Reports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Heatmap de fluxo por dia e horário</CardTitle>
+          <CardTitle>Heatmap de fluxo por dia e horÃ¡rio</CardTitle>
         </CardHeader>
         <CardContent className="overflow-auto">
           <div className="min-w-[900px] space-y-2">
@@ -686,7 +694,7 @@ export default function Reports() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Relatório consolidado por departamento</CardTitle>
+            <CardTitle>RelatÃ³rio consolidado por departamento</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -694,9 +702,9 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>Departamento</TableHead>
                   <TableHead className="text-right">Visitas</TableHead>
-                  <TableHead className="text-right">Concluídas</TableHead>
+                  <TableHead className="text-right">ConcluÃ­das</TableHead>
                   <TableHead className="text-right">Canceladas</TableHead>
-                  <TableHead className="text-right">Participação</TableHead>
+                  <TableHead className="text-right">ParticipaÃ§Ã£o</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -716,13 +724,13 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ranking de anfitriões e fluxo semanal</CardTitle>
+            <CardTitle>Ranking de anfitriÃµes e fluxo semanal</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Anfitrião</TableHead>
+                  <TableHead>AnfitriÃ£o</TableHead>
                   <TableHead className="text-right">Visitas</TableHead>
                 </TableRow>
               </TableHeader>
@@ -741,7 +749,7 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>Dia</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Concluídas</TableHead>
+                  <TableHead className="text-right">ConcluÃ­das</TableHead>
                   <TableHead className="text-right">Canceladas</TableHead>
                 </TableRow>
               </TableHeader>
@@ -781,7 +789,7 @@ export default function Reports() {
                   <TableHead>Visitante</TableHead>
                   <TableHead>Documento</TableHead>
                   <TableHead>Departamento</TableHead>
-                  <TableHead>Anfitrião</TableHead>
+                  <TableHead>AnfitriÃ£o</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -803,7 +811,7 @@ export default function Reports() {
 
             <div className="flex items-center justify-between space-x-2 py-4">
               <div className="text-sm text-muted-foreground">
-                Página {currentPage} de {totalPages}
+                PÃ¡gina {currentPage} de {totalPages}
               </div>
               <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
@@ -811,7 +819,7 @@ export default function Reports() {
                   Anterior
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                  Próximo
+                  PrÃ³ximo
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -829,7 +837,7 @@ export default function Reports() {
       )}
 
       <div className="text-xs text-muted-foreground">
-        Indicadores principais: pendentes {pendingVisits} • concluídas {completedVisits} • canceladas {cancelledVisits}.
+        Indicadores principais: pendentes {pendingVisits} â€¢ concluÃ­das {completedVisits} â€¢ canceladas {cancelledVisits}.
       </div>
     </div>
   );

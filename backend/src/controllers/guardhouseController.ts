@@ -47,6 +47,23 @@ const movementInclude = {
   },
 } satisfies Prisma.GuardhouseVehicleMovementInclude;
 
+const blockInclude = {
+  registeredBy: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+  unblockedBy: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+} satisfies Prisma.GuardhouseVehicleBlockInclude;
+
 type AuthUser = {
   id: string;
   role: string;
@@ -374,6 +391,7 @@ export const getGuardhouseVehicleById = async (req: AuthRequest, res: Response) 
       where: { id: id as string },
       include: {
         blocks: {
+          include: blockInclude,
           orderBy: {
             createdAt: 'desc',
           },
@@ -630,6 +648,7 @@ export const blockGuardhouseVehicle = async (req: AuthRequest, res: Response) =>
   try {
     const { id } = req.params;
     const reason = asString(req.body.reason);
+    const notes = asString(req.body.notes);
     if (!reason) {
       return res.status(400).json({ message: 'Reason is required' });
     }
@@ -654,6 +673,7 @@ export const blockGuardhouseVehicle = async (req: AuthRequest, res: Response) =>
         data: {
           isActive: false,
           endAt: now,
+          unblockedById: authUser.id,
         },
       });
 
@@ -661,11 +681,13 @@ export const blockGuardhouseVehicle = async (req: AuthRequest, res: Response) =>
         data: {
           vehicleId: id as string,
           reason,
+          notes: notes ?? null,
           startAt: now,
           endAt: endAt ?? null,
           isActive: true,
           registeredById: authUser.id,
         },
+        include: blockInclude,
       });
     });
 
@@ -681,8 +703,14 @@ export const blockGuardhouseVehicle = async (req: AuthRequest, res: Response) =>
 };
 
 export const unblockGuardhouseVehicle = async (req: AuthRequest, res: Response) => {
+  const authUser = getAuthUser(req, res);
+  if (!authUser) {
+    return;
+  }
+
   try {
     const { id } = req.params;
+    const now = new Date();
 
     const updated = await prisma.guardhouseVehicleBlock.updateMany({
       where: {
@@ -691,7 +719,8 @@ export const unblockGuardhouseVehicle = async (req: AuthRequest, res: Response) 
       },
       data: {
         isActive: false,
-        endAt: new Date(),
+        endAt: now,
+        unblockedById: authUser.id,
       },
     });
 
@@ -1065,6 +1094,10 @@ export const registerGuardhouseEntry = async (req: AuthRequest, res: Response) =
         }
       }
 
+      if (!vehicle.isActive) {
+        throw new Error('VEHICLE_INACTIVE');
+      }
+
       const activeBlock = await tx.guardhouseVehicleBlock.findFirst({
         where: {
           vehicleId: vehicle.id,
@@ -1077,7 +1110,7 @@ export const registerGuardhouseEntry = async (req: AuthRequest, res: Response) =
         },
       });
 
-      if (activeBlock && authUser.role !== 'ADMIN') {
+      if (activeBlock) {
         throw new Error('VEHICLE_BLOCKED');
       }
 
@@ -1221,6 +1254,10 @@ export const registerGuardhouseEntry = async (req: AuthRequest, res: Response) =
     res.status(201).json(movement);
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message === 'VEHICLE_INACTIVE') {
+        return res.status(403).json({ message: 'Vehicle is inactive for access' });
+      }
+
       if (error.message === 'VEHICLE_BLOCKED') {
         return res.status(403).json({ message: 'Vehicle is blocked for access' });
       }

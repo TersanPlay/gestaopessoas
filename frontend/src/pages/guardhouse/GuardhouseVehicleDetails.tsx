@@ -17,6 +17,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -38,6 +46,7 @@ import api from '@/services/api';
 import {
   guardhouseApi,
   type GuardhouseMovement,
+  type GuardhouseVehicleBlock,
   type GuardhouseVehicle,
   type GuardhouseVehicleUpdatePayload,
   type SpotType,
@@ -45,13 +54,7 @@ import {
 } from '@/services/guardhouseApi';
 
 type VehicleDetails = GuardhouseVehicle & {
-  blocks: Array<{
-    id: string;
-    reason: string;
-    startAt: string;
-    endAt: string | null;
-    isActive: boolean;
-  }>;
+  blocks: GuardhouseVehicleBlock[];
   movements: GuardhouseMovement[];
 };
 
@@ -69,6 +72,8 @@ type VehicleEditForm = {
   color: string;
   notes: string;
 };
+
+type VehicleOperationalStatus = 'ATIVO' | 'BLOQUEADO' | 'INATIVO';
 
 const categoryLabel: Record<GuardhouseVehicle['category'], string> = {
   OFFICIAL: 'Oficial',
@@ -177,6 +182,12 @@ const GuardhouseVehicleDetails = () => {
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [vehicle, setVehicle] = useState<VehicleDetails | null>(null);
+  const [blockDialogOpen, setBlockDialogOpen] = useState(false);
+  const [blockingVehicle, setBlockingVehicle] = useState(false);
+  const [unblockingVehicle, setUnblockingVehicle] = useState(false);
+  const [blockReason, setBlockReason] = useState('');
+  const [blockNotes, setBlockNotes] = useState('');
+  const [blockEndAt, setBlockEndAt] = useState('');
   const [editForm, setEditForm] = useState<VehicleEditForm>({
     plate: '',
     vehicleType: 'CAR',
@@ -233,26 +244,26 @@ const GuardhouseVehicleDetails = () => {
     }
   }, []);
 
+  const loadVehicleDetails = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = (await guardhouseApi.getVehicleById(id)) as VehicleDetails;
+      setVehicle(data);
+    } catch (error) {
+      console.error('Failed to load guardhouse vehicle details', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
-    const fetchDetails = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const data = await guardhouseApi.getVehicleById(id);
-        setVehicle(data);
-      } catch (error) {
-        console.error('Failed to load guardhouse vehicle details', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
+    void loadVehicleDetails();
     loadCameraDevices().catch(() => undefined);
-  }, [id, loadCameraDevices]);
+  }, [loadCameraDevices, loadVehicleDetails]);
 
   useEffect(() => {
     if (!canEditVehicle) {
@@ -333,6 +344,25 @@ const GuardhouseVehicleDetails = () => {
   const canManagePhoto = canEditVehicle;
   const displayedEntryNotes = vehicle?.notes ?? latestMovement?.entryNotes ?? '';
   const selectedEditColor = COLOR_OPTIONS.find((color) => color.value === editForm.color);
+  const activeBlock = useMemo(
+    () =>
+      vehicle?.blocks.find((block) => {
+        if (!block.isActive) return false;
+        const now = Date.now();
+        const start = new Date(block.startAt).getTime();
+        const end = block.endAt ? new Date(block.endAt).getTime() : Number.POSITIVE_INFINITY;
+        return start <= now && end > now;
+      }) ?? null,
+    [vehicle?.blocks],
+  );
+  const latestBlock = vehicle?.blocks[0] ?? null;
+  const operationalStatus: VehicleOperationalStatus = !vehicle
+    ? 'ATIVO'
+    : !vehicle.isActive
+      ? 'INATIVO'
+      : activeBlock
+        ? 'BLOQUEADO'
+        : 'ATIVO';
 
   const fillEditForm = useCallback(
     (currentVehicle: VehicleDetails) => {
@@ -482,6 +512,58 @@ const GuardhouseVehicleDetails = () => {
       alert('Nao foi possivel capturar da camera em rede. Verifique URL, autenticacao e CORS.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleBlockVehicle = async () => {
+    if (!vehicle || !id) return;
+
+    const normalizedReason = blockReason.trim();
+    if (!normalizedReason) {
+      alert('Informe o motivo do bloqueio.');
+      return;
+    }
+
+    const blockEndAtIso = blockEndAt ? new Date(blockEndAt).toISOString() : undefined;
+
+    setBlockingVehicle(true);
+    try {
+      await guardhouseApi.blockVehicle(id, {
+        reason: normalizedReason,
+        notes: blockNotes.trim() || undefined,
+        endAt: blockEndAtIso,
+      });
+      setBlockDialogOpen(false);
+      setBlockReason('');
+      setBlockNotes('');
+      setBlockEndAt('');
+      await loadVehicleDetails();
+      alert('Veiculo bloqueado com sucesso.');
+    } catch (error) {
+      console.error('Failed to block vehicle', error);
+      alert('Nao foi possivel bloquear o veiculo.');
+    } finally {
+      setBlockingVehicle(false);
+    }
+  };
+
+  const handleUnblockVehicle = async () => {
+    if (!vehicle || !id) return;
+    if (!activeBlock) return;
+
+    const shouldUnblock = window.confirm('Deseja realmente desbloquear este veiculo?');
+    if (!shouldUnblock) return;
+
+    setUnblockingVehicle(true);
+    try {
+      await guardhouseApi.unblockVehicle(id);
+      await loadVehicleDetails();
+      alert('Veiculo desbloqueado com sucesso.');
+    } catch (error) {
+      console.error('Failed to unblock vehicle', error);
+      alert('Nao foi possivel desbloquear o veiculo.');
+    } finally {
+      setUnblockingVehicle(false);
     }
   };
 
@@ -747,26 +829,94 @@ const GuardhouseVehicleDetails = () => {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/20">
-            <CardTitle className="text-base">Resumo Operacional</CardTitle>
+          <CardHeader className="flex flex-col gap-2 border-b bg-muted/20 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base">Resumo Operacional</CardTitle>
+              <span
+                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
+                  operationalStatus === 'BLOQUEADO'
+                    ? 'border-rose-300 bg-rose-100 text-rose-700'
+                    : operationalStatus === 'INATIVO'
+                      ? 'border-slate-300 bg-slate-100 text-slate-700'
+                      : 'border-emerald-300 bg-emerald-100 text-emerald-700'
+                }`}
+              >
+                {operationalStatus}
+              </span>
+            </div>
             {canEditVehicle ? (
-              isEditing ? (
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={savingEdit} onClick={cancelEditMode}>
-                    Cancelar
+              <div className="flex flex-wrap gap-2">
+                {activeBlock ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={unblockingVehicle || savingEdit}
+                    onClick={() => void handleUnblockVehicle()}
+                  >
+                    {unblockingVehicle ? 'Desbloqueando...' : 'Desbloquear Veiculo'}
                   </Button>
-                  <Button size="sm" disabled={savingEdit} onClick={() => void saveVehicleEdit()}>
-                    {savingEdit ? 'Salvando...' : 'Salvar Cadastro'}
+                ) : (
+                  <Button size="sm" variant="outline" disabled={savingEdit} onClick={() => setBlockDialogOpen(true)}>
+                    Bloquear Veiculo
                   </Button>
-                </div>
-              ) : (
-                <Button size="sm" variant="outline" onClick={startEditMode}>
-                  Editar Cadastro
-                </Button>
-              )
+                )}
+                {isEditing ? (
+                  <>
+                    <Button size="sm" variant="outline" disabled={savingEdit} onClick={cancelEditMode}>
+                      Cancelar
+                    </Button>
+                    <Button size="sm" disabled={savingEdit} onClick={() => void saveVehicleEdit()}>
+                      {savingEdit ? 'Salvando...' : 'Salvar Cadastro'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={startEditMode}>
+                    Editar Cadastro
+                  </Button>
+                )}
+              </div>
             ) : null}
           </CardHeader>
           <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+            {activeBlock && (
+              <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm sm:col-span-2">
+                <p className="font-semibold text-rose-800">Veiculo bloqueado para novas entradas</p>
+                <p className="mt-1 text-rose-700">
+                  <span className="font-semibold">Motivo:</span> {activeBlock.reason}
+                </p>
+                <p className="text-rose-700">
+                  <span className="font-semibold">Data/Hora do bloqueio:</span> {formatDateTime(activeBlock.startAt)}
+                </p>
+                <p className="text-rose-700">
+                  <span className="font-semibold">Responsavel:</span> {activeBlock.registeredBy?.name ?? '-'}
+                </p>
+                <p className="text-rose-700">
+                  <span className="font-semibold">Observacoes:</span> {activeBlock.notes ?? '-'}
+                </p>
+              </div>
+            )}
+
+            {!activeBlock && latestBlock && (
+              <div className="rounded-lg border border-slate-300 bg-slate-50 p-3 text-sm sm:col-span-2">
+                <p className="font-semibold text-slate-800">Ultimo bloqueio registrado</p>
+                <p className="mt-1 text-slate-700">
+                  <span className="font-semibold">Motivo:</span> {latestBlock.reason}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">Inicio:</span> {formatDateTime(latestBlock.startAt)}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">Fim:</span> {latestBlock.endAt ? formatDateTime(latestBlock.endAt) : '-'}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">Bloqueado por:</span> {latestBlock.registeredBy?.name ?? '-'}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">Desbloqueado por:</span> {latestBlock.unblockedBy?.name ?? '-'}
+                </p>
+              </div>
+            )}
+
             <div className="rounded-lg border bg-background p-3">
               <p className="flex items-center gap-2 text-xs uppercase text-muted-foreground">
                 <CarFront className="h-3 w-3" />
@@ -1057,6 +1207,59 @@ const GuardhouseVehicleDetails = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bloquear Veiculo</DialogTitle>
+            <DialogDescription>
+              Informe motivo e observacoes do bloqueio. Enquanto bloqueado, o veiculo nao pode registrar nova entrada.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Motivo do bloqueio *</label>
+              <Input
+                value={blockReason}
+                onChange={(event) => setBlockReason(event.target.value)}
+                placeholder="Ex.: Pendencia documental"
+                disabled={blockingVehicle}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Observacoes</label>
+              <textarea
+                value={blockNotes}
+                onChange={(event) => setBlockNotes(event.target.value)}
+                placeholder="Detalhes adicionais do bloqueio"
+                disabled={blockingVehicle}
+                className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Data limite do bloqueio (opcional)</label>
+              <Input
+                type="datetime-local"
+                value={blockEndAt}
+                onChange={(event) => setBlockEndAt(event.target.value)}
+                disabled={blockingVehicle}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={blockingVehicle} onClick={() => setBlockDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" disabled={blockingVehicle} onClick={() => void handleBlockVehicle()}>
+              {blockingVehicle ? 'Bloqueando...' : 'Confirmar Bloqueio'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

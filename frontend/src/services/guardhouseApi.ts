@@ -22,6 +22,25 @@ export interface GuardhouseVehicle {
   updatedAt: string;
 }
 
+export interface GuardhouseAuditUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface GuardhouseVehicleBlock {
+  id: string;
+  reason: string;
+  notes: string | null;
+  startAt: string;
+  endAt: string | null;
+  isActive: boolean;
+  registeredById: string;
+  registeredBy?: GuardhouseAuditUser;
+  unblockedById: string | null;
+  unblockedBy?: GuardhouseAuditUser | null;
+}
+
 export interface GuardhouseDriver {
   id: string;
   fullName: string;
@@ -165,6 +184,23 @@ export const guardhouseApi = {
     const formData = new FormData();
     formData.append('file', file);
     const response = await api.post(`/guardhouse/vehicles/${vehicleId}/photo`, formData);
+    return response.data;
+  },
+
+  blockVehicle: async (
+    vehicleId: string,
+    payload: {
+      reason: string;
+      notes?: string;
+      endAt?: string;
+    },
+  ): Promise<GuardhouseVehicleBlock> => {
+    const response = await api.post(`/guardhouse/vehicles/${vehicleId}/block`, payload);
+    return response.data;
+  },
+
+  unblockVehicle: async (vehicleId: string): Promise<{ updatedBlocks: number }> => {
+    const response = await api.patch(`/guardhouse/vehicles/${vehicleId}/unblock`);
     return response.data;
   },
 

@@ -122,40 +122,44 @@ const GuardhouseDashboard = () => {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Veiculos no Patio</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Veiculos no Patio</CardTitle>
+            <Car className="h-4 w-4 text-indigo-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : stats?.vehiclesInside ?? 0}</span>
-            <Car className="h-5 w-5 text-primary" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : stats?.vehiclesInside ?? 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Veiculos presentes agora</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Entradas Hoje</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Entradas Hoje</CardTitle>
+            <ArrowRightCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : stats?.entriesToday ?? 0}</span>
-            <ArrowRightCircle className="h-5 w-5 text-emerald-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : stats?.entriesToday ?? 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Movimentacoes de entrada no dia</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saidas Hoje</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Saidas Hoje</CardTitle>
+            <ArrowLeftCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : stats?.exitsToday ?? 0}</span>
-            <ArrowLeftCircle className="h-5 w-5 text-amber-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : stats?.exitsToday ?? 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">Movimentacoes de saida no dia</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Tempo Medio</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Tempo Medio</CardTitle>
+            <Clock3 className="h-4 w-4 text-purple-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : `${stats?.averageDurationMinutes ?? 0} min`}</span>
-            <Clock3 className="h-5 w-5 text-indigo-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : `${stats?.averageDurationMinutes ?? 0} min`}</div>
+            <p className="text-xs text-muted-foreground mt-1">Permanencia media dos finalizados</p>
           </CardContent>
         </Card>
       </div>

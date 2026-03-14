@@ -292,40 +292,44 @@ const GuardhouseReports = () => {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Movimentacoes</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-indigo-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Movimentacoes</CardTitle>
+            <BarChart3 className="h-4 w-4 text-indigo-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : totalMovements}</span>
-            <BarChart3 className="h-5 w-5 text-primary" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : totalMovements}</div>
+            <p className="text-xs text-muted-foreground mt-1">Total no periodo filtrado</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Veiculos unicos</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Veiculos unicos</CardTitle>
+            <CarFront className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : uniqueVehicles}</span>
-            <CarFront className="h-5 w-5 text-sky-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : uniqueVehicles}</div>
+            <p className="text-xs text-muted-foreground mt-1">Placas distintas no periodo</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">No patio agora</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">No patio agora</CardTitle>
+            <FileBarChart className="h-4 w-4 text-blue-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : presentCount}</span>
-            <FileBarChart className="h-5 w-5 text-emerald-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : presentCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">Movimentacoes ainda abertas</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Tempo medio</CardTitle>
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Tempo medio</CardTitle>
+            <Clock3 className="h-4 w-4 text-purple-500" />
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <span className="text-3xl font-bold">{loading ? '-' : formatDurationLabel(averageDuration)}</span>
-            <Clock3 className="h-5 w-5 text-indigo-600" />
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-900">{loading ? '-' : formatDurationLabel(averageDuration)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Apenas registros finalizados</p>
           </CardContent>
         </Card>
       </div>

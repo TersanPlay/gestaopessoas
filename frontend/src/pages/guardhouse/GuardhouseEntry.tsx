@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
-import { ArrowRightCircle, Bike, Camera, CarFront, Link2, Save, Upload } from 'lucide-react';
+import { ArrowRightCircle, Bike, Camera, CarFront, Link2, Save, ShieldAlert, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,6 +107,7 @@ type VehicleEntryDetails = GuardhouseVehicle & {
   blocks: Array<{
     id: string;
     reason: string;
+    notes?: string | null;
     startAt: string;
     endAt: string | null;
     isActive: boolean;
@@ -595,6 +596,24 @@ const GuardhouseEntry = () => {
   const selectedColor = COLOR_OPTIONS.find((color) => color.value === form.color);
   const isMotorcycle = form.vehicleType === 'MOTORCYCLE';
   const historyRows = vehicleDetails?.movements ?? [];
+  const activeVehicleBlock = useMemo(
+    () =>
+      vehicleDetails?.blocks.find((block) => {
+        if (!block.isActive) return false;
+        const now = Date.now();
+        const start = new Date(block.startAt).getTime();
+        const end = block.endAt ? new Date(block.endAt).getTime() : Number.POSITIVE_INFINITY;
+        return start <= now && end > now;
+      }) ?? null,
+    [vehicleDetails?.blocks],
+  );
+  const isEntryBlocked = Boolean(activeVehicleBlock);
+  const isVehicleInactive = vehicleDetails?.isActive === false;
+  const entryRestrictionMessage = isEntryBlocked
+    ? `Veiculo bloqueado para entrada. Motivo: ${activeVehicleBlock?.reason ?? '-'}`
+    : isVehicleInactive
+      ? 'Veiculo inativo. A entrada nao esta autorizada.'
+      : null;
   const summaryPlate = vehicleDetails?.plate ?? lastEntry?.vehicle.plate ?? (normalizedFormPlate || '-');
   const persistedPhotoUrl = resolvePhotoUrl(vehicleDetails?.photo ?? null);
   const previewPhotoUrl = pendingPhotoPreviewUrl ?? persistedPhotoUrl;
@@ -634,6 +653,14 @@ const GuardhouseEntry = () => {
     }
     if (!isValidBrazilPlate(plate)) {
       alert('Formato de placa invalido. Use ABC1234 ou BRA2E19.');
+      return;
+    }
+    if (mode === 'REGISTER_AND_ENTRY' && (isEntryBlocked || isVehicleInactive)) {
+      alert(
+        isEntryBlocked
+          ? 'Veiculo bloqueado. A entrada nao esta autorizada enquanto o bloqueio estiver ativo.'
+          : 'Veiculo inativo. A entrada nao esta autorizada.',
+      );
       return;
     }
     const selectedPhotoFile = pendingPhotoFile;
@@ -720,7 +747,14 @@ const GuardhouseEntry = () => {
         }
         alert(apiMessage ?? 'Placa ja cadastrada no sistema.');
       } else if (isAxiosError(error) && error.response?.status === 403) {
-        alert('Seu perfil nao possui permissao para executar esta acao.');
+        const normalizedApiMessage = apiMessage?.toLowerCase() ?? '';
+        if (normalizedApiMessage.includes('blocked')) {
+          alert('Veiculo bloqueado. A entrada nao esta autorizada enquanto o bloqueio estiver ativo.');
+        } else if (normalizedApiMessage.includes('inactive')) {
+          alert('Veiculo inativo. A entrada nao esta autorizada.');
+        } else {
+          alert('Seu perfil nao possui permissao para executar esta acao.');
+        }
       } else {
         console.error('Failed to process guardhouse entry page action', error);
         alert(apiMessage ?? 'Nao foi possivel processar a solicitacao.');
@@ -784,6 +818,17 @@ const GuardhouseEntry = () => {
                       ? `${plateSuggestions.length} placa(s) encontrada(s) para "${normalizedFormPlate}".`
                       : 'Nenhuma placa cadastrada para este prefixo.'}
                 </p>
+              )}
+              {entryRestrictionMessage && (
+                <div className="rounded-lg border-2 border-rose-500 bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-800 shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" />
+                    <div>
+                      <p className="text-base leading-5">Entrada bloqueada</p>
+                      <p className="mt-1 text-sm font-medium">{entryRestrictionMessage}</p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -942,7 +987,11 @@ const GuardhouseEntry = () => {
             </div>
 
                 <div className="md:col-span-2 flex flex-col gap-2 sm:flex-row">
-                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                  <Button
+                    type="submit"
+                    disabled={loading || isEntryBlocked || isVehicleInactive}
+                    className="w-full sm:w-auto"
+                  >
                     <ArrowRightCircle className="mr-2 h-4 w-4" />
                     {loading ? 'Processando...' : 'Cadastrar e registrar entrada'}
                   </Button>

@@ -74,6 +74,7 @@ model User {
   guardhouseExits       GuardhouseVehicleMovement[]   @relation("GuardhouseExitBy")
   guardhouseOccurrences GuardhouseVehicleOccurrence[] @relation("GuardhouseOccurrenceBy")
   guardhouseBlocks      GuardhouseVehicleBlock[]      @relation("GuardhouseBlockBy")
+  guardhouseUnblocks    GuardhouseVehicleBlock[]      @relation("GuardhouseUnblockBy")
 
   @@map("users")
 }
@@ -256,13 +257,17 @@ model GuardhouseVehicleBlock {
   vehicleId      String
   vehicle        GuardhouseVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   reason         String
+  notes          String?
   startAt        DateTime          @default(now())
   endAt          DateTime?
   isActive       Boolean           @default(true)
   registeredById String
   registeredBy   User              @relation("GuardhouseBlockBy", fields: [registeredById], references: [id])
+  unblockedById  String?
+  unblockedBy    User?             @relation("GuardhouseUnblockBy", fields: [unblockedById], references: [id])
   createdAt      DateTime          @default(now())
 
   @@index([vehicleId, isActive])
+  @@index([unblockedById])
   @@map("guardhouse_vehicle_blocks")
 }
