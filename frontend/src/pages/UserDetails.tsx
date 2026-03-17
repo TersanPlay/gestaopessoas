@@ -167,7 +167,7 @@ export default function UserDetails() {
 
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/12 px-3 py-1 text-xs font-medium text-emerald-100">
+                  <span className="rounded-full border border-teal-500/40 bg-teal-600/20 px-3 py-1 text-xs font-medium text-teal-50">
                     {authProviderLabel(user.authProvider)}
                   </span>
                   <span className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs font-medium text-foreground">
