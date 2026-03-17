@@ -48,9 +48,9 @@ const DetailItem = ({
   value: string;
   subtle?: boolean;
 }) => (
-  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
-    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{label}</p>
-    <p className={`mt-2 text-sm ${subtle ? 'text-slate-300' : 'text-slate-100'}`}>{value}</p>
+  <div className="rounded-2xl border border-border/60 bg-muted/40 p-4">
+    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
+    <p className={`mt-2 text-sm ${subtle ? 'text-muted-foreground' : 'text-foreground'}`}>{value}</p>
   </div>
 );
 
@@ -65,15 +65,15 @@ const SectionBlock = ({
   description: string;
   children: ReactNode;
 }) => (
-  <Card className="overflow-hidden border-slate-800 bg-slate-950 text-slate-100 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.95)]">
-    <CardHeader className="border-b border-slate-800/80 bg-slate-900/70">
+  <Card className="card-corporate overflow-hidden shadow-elevated">
+    <CardHeader className="border-b border-border/60 bg-muted/40">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-100">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
           <Icon className="h-5 w-5" />
         </div>
         <div className="space-y-1">
-          <CardTitle className="text-xl text-white">{title}</CardTitle>
-          <p className="text-sm text-slate-400">{description}</p>
+          <CardTitle className="text-xl text-foreground">{title}</CardTitle>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
     </CardHeader>
@@ -151,14 +151,14 @@ export default function UserDetails() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="relative overflow-hidden rounded-[32px] border border-slate-800 bg-slate-950 text-slate-50 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.95)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(148,163,184,0.28),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(51,65,85,0.65),_transparent_35%),linear-gradient(135deg,_rgba(15,23,42,0.96),_rgba(30,41,59,0.98))]" />
+      <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-card text-foreground shadow-elevated">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.18),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(79,70,229,0.22),transparent_32%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--card)))]" />
         <div className="relative z-10 p-6 sm:p-8 lg:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-5">
               <Button
                 variant="ghost"
-                className="w-fit border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
+                className="w-fit border border-border/60 bg-muted/40 text-foreground hover:bg-muted/60"
                 onClick={() => navigate(isOwnProfile ? '/settings' : '/users')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -167,18 +167,18 @@ export default function UserDetails() {
 
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
+                  <span className="rounded-full border border-emerald-400/30 bg-emerald-400/12 px-3 py-1 text-xs font-medium text-emerald-100">
                     {authProviderLabel(user.authProvider)}
                   </span>
-                  <span className="rounded-full border border-slate-500/40 bg-slate-800/70 px-3 py-1 text-xs font-medium text-slate-200">
+                  <span className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs font-medium text-foreground">
                     {roleLabel(user.role)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm uppercase tracking-[0.28em] text-slate-400">{headline}</p>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{user.name}</h1>
+                  <p className="text-sm uppercase tracking-[0.28em] text-muted-foreground">{headline}</p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">{user.name}</h1>
                 </div>
-                <p className="max-w-2xl text-sm leading-6 text-slate-300">
+                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                   Visualização completa do cadastro sincronizado, organizada por identidade, vínculo profissional e dados contratuais.
                 </p>
               </div>
@@ -186,15 +186,15 @@ export default function UserDetails() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Matrícula</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">Matrícula</p>
                 <p className="mt-2 text-lg font-semibold text-white">{fallback(user.matricula)}</p>
               </div>
               <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">CPF</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">CPF</p>
                 <p className="mt-2 text-lg font-semibold text-white">{formatCpf(user.cpf)}</p>
               </div>
               <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Carga Horária</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">Carga Horária</p>
                 <p className="mt-2 text-lg font-semibold text-white">
                   {user.cargaHorariaSemanal ? `${user.cargaHorariaSemanal}h/semana` : '-'}
                 </p>
@@ -202,19 +202,19 @@ export default function UserDetails() {
             </div>
           </div>
 
-          <Separator className="my-6 bg-white/10" />
+          <Separator className="my-6 bg-border/70" />
 
-          <div className="flex flex-col gap-3 text-sm text-slate-300 sm:flex-row sm:flex-wrap">
+          <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap">
             <div className="inline-flex items-center gap-2">
-              <Mail className="h-4 w-4 text-slate-400" />
+              <Mail className="h-4 w-4 text-muted-foreground/80" />
               {user.email || 'Sem e-mail cadastrado'}
             </div>
             <div className="inline-flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-slate-400" />
+              <Building2 className="h-4 w-4 text-muted-foreground/80" />
               Departamento interno: {user.department?.name || 'Não vinculado'}
             </div>
             <div className="inline-flex items-center gap-2">
-              <BadgeCheck className="h-4 w-4 text-slate-400" />
+              <BadgeCheck className="h-4 w-4 text-muted-foreground/80" />
               Atualizado em {formatDateLabel(user.updatedAt || null)}
             </div>
           </div>
@@ -265,17 +265,17 @@ export default function UserDetails() {
         </SectionBlock>
       </div>
 
-      <Card className="border-slate-200 bg-white/90 shadow-sm">
-        <CardContent className="flex flex-col gap-4 p-6 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="card-corporate border border-border/70 bg-card/95">
+        <CardContent className="flex flex-col gap-4 p-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="font-medium text-slate-900">Resumo de integração</p>
-            <p>
+            <p className="font-medium text-foreground">Resumo de integração</p>
+            <p className="text-muted-foreground">
               Os campos da API externa exibidos nesta página são: matrícula, CPF, nome, cargo, lotação,
               função, vínculo, data de admissão, data de demissão e carga horária semanal.
             </p>
           </div>
           {isOwnProfile ? (
-            <Button asChild className="bg-slate-900 hover:bg-slate-800">
+            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Link to="/settings">
                 <Shield className="mr-2 h-4 w-4" />
                 Gerenciar senha e preferências
@@ -293,30 +293,30 @@ export default function UserDetails() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-slate-200">
+        <Card className="card-corporate border border-border/70">
           <CardContent className="flex items-center gap-3 p-5">
-            <Building2 className="h-5 w-5 text-slate-500" />
+            <Building2 className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Lotação</p>
-              <p className="font-medium text-slate-900">{fallback(user.lotacao)}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Lotação</p>
+              <p className="font-medium text-foreground">{fallback(user.lotacao)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
+        <Card className="card-corporate border border-border/70">
           <CardContent className="flex items-center gap-3 p-5">
-            <CalendarClock className="h-5 w-5 text-slate-500" />
+            <CalendarClock className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Admissão</p>
-              <p className="font-medium text-slate-900">{formatDateLabel(user.dataAdmissao)}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Admissão</p>
+              <p className="font-medium text-foreground">{formatDateLabel(user.dataAdmissao)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200">
+        <Card className="card-corporate border border-border/70">
           <CardContent className="flex items-center gap-3 p-5">
-            <UserCircle2 className="h-5 w-5 text-slate-500" />
+            <UserCircle2 className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Função</p>
-              <p className="font-medium text-slate-900">{fallback(user.funcao)}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Função</p>
+              <p className="font-medium text-foreground">{fallback(user.funcao)}</p>
             </div>
           </CardContent>
         </Card>
