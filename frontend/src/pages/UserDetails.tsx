@@ -20,7 +20,7 @@ import type { AppUser } from '../types/user';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatCpf, formatDateLabel } from '@/lib/formatters';
+import { formatDateLabel, maskDocument } from '@/lib/formatters';
 
 const fallback = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === '') {
@@ -167,7 +167,7 @@ export default function UserDetails() {
 
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-teal-500/40 bg-teal-600/20 px-3 py-1 text-xs font-medium text-teal-50">
+                  <span className="rounded-full border border-teal-500/40 bg-teal-600/20 px-3 py-1 text-xs font-medium text-mauve-50">
                     {authProviderLabel(user.authProvider)}
                   </span>
                   <span className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs font-medium text-foreground">
@@ -191,7 +191,7 @@ export default function UserDetails() {
               </div>
               <div className="card-corporate border border-border/70 p-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">CPF</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{formatCpf(user.cpf)}</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{maskDocument(user.cpf) || '-'}</p>
               </div>
               <div className="card-corporate border border-border/70 p-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Carga Horária</p>
@@ -229,7 +229,7 @@ export default function UserDetails() {
         >
           <DetailItem label="Nome" value={fallback(user.name)} />
           <DetailItem label="Matrícula" value={fallback(user.matricula)} />
-          <DetailItem label="CPF" value={formatCpf(user.cpf)} />
+          <DetailItem label="CPF" value={maskDocument(user.cpf) || '-'} />
           <DetailItem label="E-mail" value={user.email || 'Sem e-mail cadastrado'} subtle />
           <DetailItem label="Perfil no sistema" value={roleLabel(user.role)} subtle />
           <DetailItem label="Origem da conta" value={authProviderLabel(user.authProvider)} subtle />
