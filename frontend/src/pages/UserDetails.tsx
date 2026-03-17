@@ -185,17 +185,17 @@ export default function UserDetails() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">Matrícula</p>
-                <p className="mt-2 text-lg font-semibold text-white">{fallback(user.matricula)}</p>
+              <div className="card-corporate border border-border/70 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Matrícula</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{fallback(user.matricula)}</p>
               </div>
-              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">CPF</p>
-                <p className="mt-2 text-lg font-semibold text-white">{formatCpf(user.cpf)}</p>
+              <div className="card-corporate border border-border/70 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">CPF</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">{formatCpf(user.cpf)}</p>
               </div>
-              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-indigo-100/80">Carga Horária</p>
-                <p className="mt-2 text-lg font-semibold text-white">
+              <div className="card-corporate border border-border/70 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Carga Horária</p>
+                <p className="mt-2 text-lg font-semibold text-foreground">
                   {user.cargaHorariaSemanal ? `${user.cargaHorariaSemanal}h/semana` : '-'}
                 </p>
               </div>
