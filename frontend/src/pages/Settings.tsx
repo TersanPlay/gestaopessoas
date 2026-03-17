@@ -14,7 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Save, Shield, Server, Download, RotateCw, Trash2 } from 'lucide-react';
+import { Loader2, Save, Shield, Server, Download, RotateCw, Trash2, LockKeyhole } from 'lucide-react';
+import { formatCpf } from '@/lib/formatters';
 
 const Settings = () => {
   const { user, setUser } = useAuth();
@@ -22,9 +23,9 @@ const Settings = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const isAdmin = user?.role === 'ADMIN';
+  const isExternalUser = user?.authProvider === 'EXTERNAL';
   const [tab, setTab] = useState<'profile' | 'backup'>('profile');
 
-  // Backup state
   const [backups, setBackups] = useState<{ file: string; size: number; modified: string }[]>([]);
   const [backupScope, setBackupScope] = useState('full');
   const [backupLoading, setBackupLoading] = useState(false);
@@ -36,14 +37,14 @@ const Settings = () => {
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    email: user?.email || '',
-    password: '',
-    confirmPassword: ''
+    contactEmail: user?.email || '',
+    newPassword: '',
+    confirmNewPassword: ''
   });
 
   type ProfileUpdatePayload = {
     name: string;
-    email: string;
+    email: string | null;
     password?: string;
   };
 
@@ -61,13 +62,25 @@ const Settings = () => {
     });
   };
 
+  useEffect(() => {
+    setFormData({
+      name: user?.name || '',
+      contactEmail: user?.email || '',
+      newPassword: '',
+      confirmNewPassword: ''
+    });
+  }, [user?.id, user?.name, user?.email]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccess('');
     setError('');
 
-    if (formData.password && formData.password !== formData.confirmPassword) {
-      setError('As senhas não coincidem');
+    if (
+      formData.newPassword &&
+      formData.newPassword !== formData.confirmNewPassword
+    ) {
+      setError('As senhas nÃ£o coincidem');
       return;
     }
 
@@ -75,20 +88,22 @@ const Settings = () => {
     try {
       const data: ProfileUpdatePayload = {
         name: formData.name,
-        email: formData.email
+        email: formData.contactEmail || null
       };
 
-      if (formData.password) {
-        data.password = formData.password;
+      if (formData.newPassword) {
+        data.password = formData.newPassword;
       }
 
       const response = await api.put(`/users/${user?.id}`, data);
-      if (setUser) {
-        setUser({ ...user!, name: response.data.name, email: response.data.email });
-      }
+      setUser(response.data);
 
       setSuccess('Perfil atualizado com sucesso!');
-      setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+      setFormData((prev) => ({
+        ...prev,
+        newPassword: '',
+        confirmNewPassword: ''
+      }));
     } catch (err) {
       console.error(err);
       setError('Erro ao atualizar perfil');
@@ -109,13 +124,13 @@ const Settings = () => {
   }, [isAdmin]);
 
   useEffect(() => {
-    fetchBackups();
+    void fetchBackups();
   }, [fetchBackups]);
 
   const humanSize = (size: number) => {
-    if (size > 1_000_000) return (size / 1_000_000).toFixed(1) + ' MB';
-    if (size > 1_000) return (size / 1_000).toFixed(1) + ' KB';
-    return size + ' B';
+    if (size > 1_000_000) return `${(size / 1_000_000).toFixed(1)} MB`;
+    if (size > 1_000) return `${(size / 1_000).toFixed(1)} KB`;
+    return `${size} B`;
   };
 
   const handleBackup = async () => {
@@ -124,7 +139,7 @@ const Settings = () => {
     try {
       await api.post('/backup', { scope: backupScope });
       setBackupMsg('Backup gerado com sucesso');
-      fetchBackups();
+      void fetchBackups();
     } catch (err) {
       console.error(err);
       setBackupMsg('Erro ao gerar backup');
@@ -138,7 +153,7 @@ const Settings = () => {
     setBackupMsg('');
     try {
       await api.post('/backup/restore', { file });
-      setBackupMsg('Restauração concluída');
+      setBackupMsg('RestauraÃ§Ã£o concluÃ­da');
     } catch (err) {
       console.error(err);
       setBackupMsg('Erro ao restaurar backup');
@@ -159,7 +174,7 @@ const Settings = () => {
     try {
       await api.delete(`/backup/${encodeURIComponent(confirmDeleteFile)}`);
       setBackupMsg(`Backup "${confirmDeleteFile}" removido com sucesso`);
-      fetchBackups();
+      void fetchBackups();
     } catch (err) {
       console.error(err);
       setBackupMsg('Erro ao remover backup');
@@ -173,13 +188,15 @@ const Settings = () => {
   const canDeleteBackup = !!confirmDeleteFile && confirmDeleteText === confirmDeleteFile;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between flex-wrap gap-3">
+    <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground">Gerencie suas informações pessoais e segurança.</p>
+          <h1 className="text-3xl font-bold tracking-tight">ConfiguraÃ§Ãµes</h1>
+          <p className="text-muted-foreground">
+            Gerencie senha, identidade local e rotinas administrativas do ambiente.
+          </p>
         </div>
-        <div className="inline-flex items-center rounded-lg border bg-card p-1 gap-1">
+        <div className="inline-flex items-center gap-1 rounded-lg border bg-card p-1">
           <Button variant={tab === 'profile' ? 'default' : 'ghost'} size="sm" onClick={() => setTab('profile')}>
             Perfil
           </Button>
@@ -195,64 +212,110 @@ const Settings = () => {
         <Card>
           <CardHeader>
             <CardTitle>Perfil</CardTitle>
-            <CardDescription>Atualize suas informações de contato e senha.</CardDescription>
+            <CardDescription>
+              Senhas e e-mail continuam locais. Dados funcionais de contas JIT sÃ£o sincronizados em cada login.
+            </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <CardContent className="space-y-4">
               {success && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+                <div className="rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
                   {success}
                 </div>
               )}
               {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                <div className="rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
                   {error}
                 </div>
               )}
 
-              <div className="flex flex-col items-center justify-center mb-6 gap-2">
+              {isExternalUser && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 font-medium text-slate-900">
+                    <LockKeyhole className="h-4 w-4" />
+                    Conta sincronizada pela API externa
+                  </div>
+                  <p className="mt-2">
+                    Nome, matrÃ­cula, CPF e campos funcionais vÃªm da integraÃ§Ã£o JIT. Aqui vocÃª gerencia apenas e-mail local e senha.
+                  </p>
+                </div>
+              )}
+
+              <div className="mb-6 flex flex-col items-center justify-center gap-2">
                 <Avatar className="h-24 w-24">
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary font-bold">
+                  <AvatarFallback className="bg-primary/10 text-2xl font-bold text-primary">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-center">
-                  <p className="font-medium text-lg">{user?.name}</p>
+                  <p className="text-lg font-medium">{user?.name}</p>
                   <p className="text-sm text-muted-foreground capitalize">{user?.role?.toLowerCase()}</p>
                 </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="name">Nome</Label>
-                <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={isExternalUser}
+                />
+                {isExternalUser && (
+                  <p className="text-xs text-muted-foreground">
+                    O nome Ã© atualizado automaticamente a partir da API externa.
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="matricula">MatrÃ­cula</Label>
+                  <Input id="matricula" value={user?.matricula || ''} readOnly disabled />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="cpf">CPF</Label>
+                  <Input id="cpf" value={formatCpf(user?.cpf)} readOnly disabled />
+                </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+                <Input
+                  id="email"
+                  name="contactEmail"
+                  type="email"
+                  value={formData.contactEmail}
+                  onChange={handleChange}
+                  autoComplete="off"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="password">Nova Senha (opcional)</Label>
                   <Input
                     id="password"
-                    name="password"
+                    name="newPassword"
                     type="password"
-                    value={formData.password}
+                    value={formData.newPassword}
                     onChange={handleChange}
                     placeholder="Deixe em branco para manter"
+                    autoComplete="new-password"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                   <Input
                     id="confirmPassword"
-                    name="confirmPassword"
+                    name="confirmNewPassword"
                     type="password"
-                    value={formData.confirmPassword}
+                    value={formData.confirmNewPassword}
                     onChange={handleChange}
                     placeholder="Repita a nova senha"
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
@@ -267,7 +330,7 @@ const Settings = () => {
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Salvar Alterações
+                    Salvar AlteraÃ§Ãµes
                   </>
                 )}
               </Button>
@@ -280,36 +343,36 @@ const Settings = () => {
         <Card className="border-2 border-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> Backup & Restauração
+              <Shield className="h-5 w-5 text-primary" /> Backup & RestauraÃ§Ã£o
             </CardTitle>
-            <CardDescription>Disponível apenas para administradores.</CardDescription>
+            <CardDescription>DisponÃ­vel apenas para administradores.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {backupMsg && (
-              <div className="text-sm text-primary font-medium bg-primary/5 border border-primary/20 px-3 py-2 rounded">
+              <div className="rounded border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-medium text-primary">
                 {backupMsg}
               </div>
             )}
 
             <div className="flex flex-col gap-3">
               <Label className="text-sm">Tipo de backup</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
                   { key: 'full', label: 'Completo', icon: Shield, color: 'text-indigo-600', hover: 'hover:bg-indigo-50 hover:border-indigo-200' },
                   { key: 'visits', label: 'Visitas', icon: RotateCw, color: 'text-emerald-600', hover: 'hover:bg-emerald-50 hover:border-emerald-200' },
                   { key: 'visitors', label: 'Visitantes', icon: Server, color: 'text-blue-600', hover: 'hover:bg-blue-50 hover:border-blue-200' },
                   { key: 'departments', label: 'Departamentos', icon: Download, color: 'text-amber-600', hover: 'hover:bg-amber-50 hover:border-amber-200' },
-                  { key: 'users', label: 'Usuários', icon: Save, color: 'text-rose-600', hover: 'hover:bg-rose-50 hover:border-rose-200' },
+                  { key: 'users', label: 'UsuÃ¡rios', icon: Save, color: 'text-rose-600', hover: 'hover:bg-rose-50 hover:border-rose-200' },
                   { key: 'totem', label: 'Totem', icon: Server, color: 'text-slate-600', hover: 'hover:bg-slate-50 hover:border-slate-200' },
                 ].map((opt) => (
                   <Button
                     key={opt.key}
                     type="button"
                     variant="outline"
-                    className={`justify-start w-full h-10 border ${opt.hover} ${backupScope === opt.key ? 'border-primary bg-primary/5' : ''}`}
+                    className={`h-10 w-full justify-start border ${opt.hover} ${backupScope === opt.key ? 'border-primary bg-primary/5' : ''}`}
                     onClick={() => setBackupScope(opt.key)}
                   >
-                    <opt.icon className={`h-4 w-4 mr-2 ${opt.color}`} />
+                    <opt.icon className={`mr-2 h-4 w-4 ${opt.color}`} />
                     {opt.label}
                   </Button>
                 ))}
@@ -317,59 +380,59 @@ const Settings = () => {
 
               <div className="flex items-center justify-start">
                 <Button onClick={handleBackup} disabled={backupLoading} className="w-full sm:w-auto">
-                  {backupLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Server className="h-4 w-4 mr-2" />}
+                  {backupLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Server className="mr-2 h-4 w-4" />}
                   Gerar backup ({backupScope})
                 </Button>
               </div>
             </div>
 
-            <div className="border rounded-lg">
-              <div className="px-3 py-2 border-b text-sm font-semibold text-muted-foreground flex justify-between items-center">
+            <div className="rounded-lg border">
+              <div className="flex items-center justify-between border-b px-3 py-2 text-sm font-semibold text-muted-foreground">
                 <span>Backups existentes</span>
-                <Button variant="ghost" size="sm" onClick={fetchBackups}>
-                  <RotateCw className="h-4 w-4 mr-1" /> Atualizar
+                <Button variant="ghost" size="sm" onClick={() => void fetchBackups()}>
+                  <RotateCw className="mr-1 h-4 w-4" /> Atualizar
                 </Button>
               </div>
-              <div className="divide-y max-h-72 overflow-auto">
+              <div className="max-h-72 divide-y overflow-auto">
                 {backups.length === 0 && (
                   <div className="p-3 text-sm text-muted-foreground">Nenhum backup encontrado.</div>
                 )}
-                {backups.map((b) => (
-                  <div key={b.file} className="p-3 text-sm flex items-center justify-between gap-2">
+                {backups.map((backup) => (
+                  <div key={backup.file} className="flex items-center justify-between gap-2 p-3 text-sm">
                     <div className="flex flex-col">
-                      <span className="font-medium text-foreground break-all">{b.file}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(b.modified).toLocaleString()} • {humanSize(b.size)}
+                      <span className="break-all font-medium text-foreground">{backup.file}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(backup.modified).toLocaleString()} â€¢ {humanSize(backup.size)}
                       </span>
                     </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRestore(b.file)}
+                        onClick={() => void handleRestore(backup.file)}
                         disabled={!!restoreLoading}
                       >
-                        {restoreLoading === b.file ? (
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        {restoreLoading === backup.file ? (
+                          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                         ) : (
-                          <RotateCw className="h-4 w-4 mr-1" />
+                          <RotateCw className="mr-1 h-4 w-4" />
                         )}
                         Restaurar
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(`/db/backups/${b.file}`, '_blank')}
+                        onClick={() => window.open(`/db/backups/${backup.file}`, '_blank')}
                       >
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(b.file)}
+                        onClick={() => handleDelete(backup.file)}
                         disabled={!!deleteLoading}
                       >
-                        {deleteLoading === b.file ? (
+                        {deleteLoading === backup.file ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Trash2 className="h-4 w-4 text-red-500" />
@@ -397,7 +460,7 @@ const Settings = () => {
           <DialogHeader>
             <DialogTitle>Excluir backup</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o backup <strong>{confirmDeleteFile}</strong>? Esta aÃ§Ã£o nÃ£o pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -424,10 +487,10 @@ const Settings = () => {
             </Button>
             <Button
               variant="destructive"
-              onClick={confirmDelete}
+              onClick={() => void confirmDelete()}
               disabled={!!deleteLoading || !canDeleteBackup}
             >
-              {deleteLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {deleteLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Excluir
             </Button>
           </DialogFooter>
@@ -438,4 +501,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

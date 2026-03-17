@@ -121,7 +121,6 @@ export function AppSidebar() {
         // Remove restricted items for Colaborador
         items = items.filter(item => 
           item.url !== '/visitors' && 
-          item.url !== '/settings' &&
           item.url !== '/totem' &&
           item.url !== '/reports'
         );
@@ -205,14 +204,16 @@ export function AppSidebar() {
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">{user?.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {user?.email || (user?.matricula ? `Matrícula ${user.matricula}` : 'Sem e-mail')}
+                      </span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link to="/settings" className="cursor-pointer flex w-full items-center gap-2">
+                    <Link to="/profile" className="cursor-pointer flex w-full items-center gap-2">
                         <User className="size-4" />
                         Perfil
                     </Link>

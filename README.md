@@ -31,7 +31,8 @@ npm run dev:backend
 # frontend (porta 5173/5174)
 npm run dev:frontend
 ```
-Credenciais seed: `admin@gestao.com` / `admin123`.
+Credenciais seed locais do admin: e-mail `admin@gestao.com`, senha `admin123`.
+Para o provisionamento JIT, configure `SERVIDOR_AUTH_API_URL` e `SERVIDOR_AUTH_API_KEY` em `backend/.env`.
 
 ## Estrutura
 - `backend/` – API, Prisma e migrações.
@@ -65,6 +66,7 @@ Credenciais seed: `admin@gestao.com` / `admin123`.
 ## Scripts úteis
 - `npm run dev:backend` – API com hot reload.
 - `npm run dev:frontend` – SPA/totem com HMR.
+- `POST /api/auth/login` – autenticação híbrida por matrícula + CPF + senha, com provisionamento JIT e sincronização funcional.
 - `npm run build` – build de ambos workspaces.
 - `npm run verify` – valida dependências + Prisma + build completo.
 - `npm run verify:deps` – detecta dependências quebradas/inválidas no monorepo.

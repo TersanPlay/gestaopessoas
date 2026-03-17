@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import FirstAccess from './pages/FirstAccess';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Departments from './pages/Departments';
@@ -10,6 +11,7 @@ import VisitorDetails from './pages/VisitorDetails';
 import Visits from './pages/Visits';
 import NewVisit from './pages/NewVisit';
 import Users from './pages/Users';
+import UserDetails from './pages/UserDetails';
 import Agenda from './pages/Agenda';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
@@ -76,6 +78,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/first-access" element={<FirstAccess />} />
           <Route path="/privacy" element={<Privacy />} />
           
           {/* Totem Routes - Protected for ADMIN and RECEPCIONISTA only */}
@@ -131,6 +134,12 @@ function App() {
                  <Users />
                </RoleRoute>
              } />
+             <Route path="/users/:id" element={
+               <RoleRoute allowedRoles={['ADMIN']}>
+                 <UserDetails />
+               </RoleRoute>
+             } />
+             <Route path="/profile" element={<UserDetails />} />
              
              <Route path="/calendar" element={<Agenda />} />
 
@@ -181,11 +190,7 @@ function App() {
                </RoleRoute>
              } />
              
-             <Route path="/settings" element={
-               <RoleRoute allowedRoles={['ADMIN', 'RECEPCIONISTA']}>
-                 <Settings />
-               </RoleRoute>
-             } />
+             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>
       </AuthProvider>

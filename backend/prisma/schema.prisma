@@ -13,6 +13,11 @@ enum Role {
   RECEPCIONISTA
 }
 
+enum AuthProvider {
+  LOCAL
+  EXTERNAL
+}
+
 enum VisitStatus {
   PENDING
   CHECKIN
@@ -62,9 +67,19 @@ enum OccurrenceType {
 model User {
   id                    String                        @id @default(uuid())
   name                  String
-  email                 String                        @unique
+  email                 String?                       @unique
+  matricula             String?                       @unique
+  cpf                   String?                       @unique
   password              String
+  authProvider          AuthProvider                  @default(LOCAL)
   role                  Role                          @default(COLABORADOR)
+  cargo                 String?
+  lotacao               String?
+  funcao                String?
+  vinculo               String?
+  dataAdmissao          DateTime?                     @db.Date
+  dataDemissao          DateTime?                     @db.Date
+  cargaHorariaSemanal   Int?
   departmentId          String?
   department            Department?                   @relation(fields: [departmentId], references: [id])
   createdAt             DateTime                      @default(now())

@@ -25,7 +25,7 @@ export interface GuardhouseVehicle {
 export interface GuardhouseAuditUser {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
 }
 
 export interface GuardhouseVehicleBlock {
