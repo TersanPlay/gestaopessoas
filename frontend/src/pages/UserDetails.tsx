@@ -185,15 +185,15 @@ export default function UserDetails() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/25 via-primary/15 to-primary/10 p-4 shadow-[0_18px_40px_-24px_hsl(var(--primary))]">
+              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Matrícula</p>
                 <p className="mt-2 text-lg font-semibold text-white">{fallback(user.matricula)}</p>
               </div>
-              <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/25 via-primary/15 to-primary/10 p-4 shadow-[0_18px_40px_-24px_hsl(var(--primary))]">
+              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">CPF</p>
                 <p className="mt-2 text-lg font-semibold text-white">{formatCpf(user.cpf)}</p>
               </div>
-              <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/25 via-primary/15 to-primary/10 p-4 shadow-[0_18px_40px_-24px_hsl(var(--primary))]">
+              <div className="rounded-2xl border border-indigo-500/40 bg-gradient-to-br from-indigo-500/22 via-indigo-500/14 to-indigo-600/12 p-4 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.75)]">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Carga Horária</p>
                 <p className="mt-2 text-lg font-semibold text-white">
                   {user.cargaHorariaSemanal ? `${user.cargaHorariaSemanal}h/semana` : '-'}
