@@ -13,8 +13,16 @@ const prisma = new PrismaClient({
 })
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('admin123', 10)
-  const adminEmail = 'admin@gestao.com'
+  const adminEmail = process.env.SEED_ADMIN_EMAIL
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      'Credenciais do seed não configuradas. Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD no backend/.env antes de rodar o seed.'
+    )
+  }
+
+  const hashedPassword = await bcrypt.hash(adminPassword, 10)
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
@@ -56,7 +64,7 @@ async function main() {
     skipDuplicates: true,
   })
 
-  console.log({ admin })
+  console.log({ adminId: admin.id, adminEmail: admin.email })
 }
 
 main()
