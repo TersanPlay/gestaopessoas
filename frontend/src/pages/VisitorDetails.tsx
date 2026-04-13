@@ -195,7 +195,7 @@ const VisitorDetails = () => {
                                             <TableCell className="whitespace-nowrap">
                                                 <div className="flex flex-col">
                                                     <span>{visit.department?.name || '-'}</span>
-                                                    {visit.host && <span className="text-xs text-muted-foreground">Anfitrião: {visit.host.name}</span>}
+                                                    {visit.host && <span className="text-xs text-muted-foreground">Responsável: {visit.host.name}</span>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="min-w-[150px]">{visit.motive}</TableCell>

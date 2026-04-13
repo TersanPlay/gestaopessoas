@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -225,7 +225,7 @@ export default function Reports() {
     if (visit.status === 'PENDING') currentDepartment.pending += 1;
     departmentsMap.set(departmentName, currentDepartment);
 
-    const hostName = visit.host?.name || 'Sem anfitriÃ£o';
+    const hostName = visit.host?.name || 'Sem responsável';
     hostsMap.set(hostName, (hostsMap.get(hostName) ?? 0) + 1);
 
     const weekdayIndex = normalizeDayIndex(visitDate.getDay());
@@ -286,7 +286,7 @@ export default function Reports() {
   const handleExportCSV = () => {
     if (reportData.length === 0) return;
 
-    const headers = ["Data/Hora", "Visitante", "Documento", "Departamento", "AnfitriÃ£o", "Status"];
+    const headers = ["Data/Hora", "Visitante", "Documento", "Departamento", "Responsável", "Status"];
     const rows = reportData.map((visit) => [
       new Date(visit.date).toLocaleString('pt-BR'),
       visit.visitor.name,
@@ -331,7 +331,7 @@ export default function Reports() {
       { label: 'Visitante', width: 50, getValue: (visit: VisitReportItem) => visit.visitor.name },
       { label: 'Documento', width: 34, getValue: (visit: VisitReportItem) => visit.visitor.document },
       { label: 'Departamento', width: 44, getValue: (visit: VisitReportItem) => visit.department?.name || '-' },
-      { label: 'Anfitriao', width: 50, getValue: (visit: VisitReportItem) => visit.host?.name || '-' },
+      { label: 'Responsável', width: 50, getValue: (visit: VisitReportItem) => visit.host?.name || '-' },
       { label: 'Status', width: 22, getValue: (visit: VisitReportItem) => statusLabel(visit.status) },
     ];
 
@@ -724,13 +724,13 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ranking de anfitriÃµes e fluxo semanal</CardTitle>
+            <CardTitle>Ranking de responsáveis e fluxo semanal</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>AnfitriÃ£o</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead className="text-right">Visitas</TableHead>
                 </TableRow>
               </TableHeader>
@@ -789,7 +789,7 @@ export default function Reports() {
                   <TableHead>Visitante</TableHead>
                   <TableHead>Documento</TableHead>
                   <TableHead>Departamento</TableHead>
-                  <TableHead>AnfitriÃ£o</TableHead>
+                  <TableHead>Responsável</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>

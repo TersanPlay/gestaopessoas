@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import api from '@/services/api';
 import {
   Select,
@@ -226,6 +227,7 @@ const GuardhouseEntry = () => {
     accessType: AccessTypeOption;
   } | null>(null);
   const [lastEntry, setLastEntry] = useState<GuardhouseMovement | null>(null);
+  const [rightPanelTab, setRightPanelTab] = useState<'media' | 'entry'>('media');
   const [existingVehicle, setExistingVehicle] = useState<GuardhouseVehicle | null>(null);
   const [vehicleDetails, setVehicleDetails] = useState<VehicleEntryDetails | null>(null);
   const [autoFilledPlate, setAutoFilledPlate] = useState<string | null>(null);
@@ -251,6 +253,12 @@ const GuardhouseEntry = () => {
     entryReasonNotes: '',
     driverName: '',
   });
+
+  useEffect(() => {
+    if (lastEntry) {
+      setRightPanelTab('entry');
+    }
+  }, [lastEntry]);
 
   const normalizedFormPlate = normalizePlate(form.plate);
 
@@ -746,6 +754,24 @@ const GuardhouseEntry = () => {
           await loadVehicleDetailsById(matched.id);
         }
         alert(apiMessage ?? 'Placa ja cadastrada no sistema.');
+      } else if (mode === 'REGISTER_AND_ENTRY' && isAxiosError(error) && error.response?.status === 409) {
+        const normalizedApiMessage = apiMessage?.toLowerCase() ?? '';
+
+        if (normalizedApiMessage.includes('active movement')) {
+          alert('Este veiculo ja possui uma entrada ativa. Use a tela de Saida para finalizar a movimentacao.');
+        } else if (normalizedApiMessage.includes('no available parking spot')) {
+          alert(
+            'Nao ha vagas disponiveis para registrar a entrada. Verifique se existem vagas cadastradas e livres no Dashboard da Guarita.',
+          );
+        } else if (normalizedApiMessage.includes('selected spot is not free')) {
+          alert('A vaga selecionada nao esta livre.');
+        } else if (normalizedApiMessage.includes('selected spot is inactive')) {
+          alert('A vaga selecionada esta inativa.');
+        } else if (normalizedApiMessage.includes('spot type does not match')) {
+          alert('O tipo da vaga selecionada nao corresponde ao tipo do veiculo.');
+        } else {
+          alert(apiMessage ?? 'Nao foi possivel registrar a entrada.');
+        }
       } else if (isAxiosError(error) && error.response?.status === 403) {
         const normalizedApiMessage = apiMessage?.toLowerCase() ?? '';
         if (normalizedApiMessage.includes('blocked')) {
@@ -1011,172 +1037,216 @@ const GuardhouseEntry = () => {
               </div>
 
               <div className="xl:sticky xl:top-4">
-                <Card className="overflow-hidden">
-                  <CardHeader className="border-b bg-muted/20 py-3">
-                    <CardTitle className="text-base">Midia do Veiculo</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 p-4">
-                    <div className="overflow-hidden rounded-xl border">
-                      <div
-                        className={`flex aspect-video items-center justify-center bg-gradient-to-br ${mediaPlaceholderSurface}`}
-                      >
-                        {previewPhotoUrl ? (
-                          <img
-                            src={previewPhotoUrl}
-                            alt={`Foto do veiculo ${summaryPlate}`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center gap-2 px-4 text-center">
-                            <MediaPlaceholderIcon className={`h-10 w-10 ${mediaPlaceholderIconColor}`} />
-                            <p className="text-sm font-semibold text-slate-800">{mediaPlaceholderTitle}</p>
-                            <p className="text-xs text-slate-600">{mediaPlaceholderSubtitle}</p>
+                <Tabs
+                  defaultValue="media"
+                  value={rightPanelTab}
+                  onValueChange={(value) => setRightPanelTab(value as 'media' | 'entry')}
+                >
+                  <Card className="overflow-hidden">
+                    <CardHeader className="border-b bg-muted/20 py-3">
+                      <TabsList className="grid h-9 w-full grid-cols-2">
+                        <TabsTrigger value="media">Midia do Veiculo</TabsTrigger>
+                        <TabsTrigger value="entry" disabled={!lastEntry}>
+                          Entrada registrada
+                        </TabsTrigger>
+                      </TabsList>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <TabsContent value="media" className="space-y-4">
+                        <div className="overflow-hidden rounded-xl border">
+                          <div
+                            className={`flex aspect-video items-center justify-center bg-gradient-to-br ${mediaPlaceholderSurface}`}
+                          >
+                            {previewPhotoUrl ? (
+                              <img
+                                src={previewPhotoUrl}
+                                alt={`Foto do veiculo ${summaryPlate}`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center gap-2 px-4 text-center">
+                                <MediaPlaceholderIcon className={`h-10 w-10 ${mediaPlaceholderIconColor}`} />
+                                <p className="text-sm font-semibold text-slate-800">{mediaPlaceholderTitle}</p>
+                                <p className="text-xs text-slate-600">{mediaPlaceholderSubtitle}</p>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={captureMode === 'file' ? 'default' : 'outline'}
-                        disabled={loading || mediaBusy}
-                        onClick={() => setCaptureMode('file')}
-                      >
-                        <Upload className="mr-1 h-4 w-4" />
-                        Arquivo
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={captureMode === 'webcam' ? 'default' : 'outline'}
-                        disabled={loading || mediaBusy}
-                        onClick={() => setCaptureMode('webcam')}
-                      >
-                        <Camera className="mr-1 h-4 w-4" />
-                        Webcam
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={captureMode === 'network' ? 'default' : 'outline'}
-                        disabled={loading || mediaBusy}
-                        onClick={() => setCaptureMode('network')}
-                      >
-                        <Link2 className="mr-1 h-4 w-4" />
-                        Rede
-                      </Button>
-                    </div>
-
-                    {captureMode === 'file' && (
-                      <div className="rounded-lg border bg-muted/20 p-3">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleFileInputChange}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          disabled={loading || mediaBusy}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Selecionar imagem
-                        </Button>
-                      </div>
-                    )}
-
-                    {captureMode === 'webcam' && (
-                      <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-                        {cameraDevices.length > 0 ? (
-                          <Select value={selectedCameraId} onValueChange={setSelectedCameraId}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecionar camera" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {cameraDevices.map((device, index) => (
-                                <SelectItem key={device.deviceId} value={device.deviceId}>
-                                  {device.label || `Camera ${index + 1}`}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">Nenhuma camera identificada ainda.</p>
-                        )}
-
-                        <div className="flex flex-wrap gap-2">
-                          {!cameraOpen ? (
-                            <Button type="button" size="sm" variant="outline" onClick={() => void startCamera()}>
-                              <Camera className="mr-2 h-4 w-4" />
-                              Abrir camera
-                            </Button>
-                          ) : (
-                            <>
-                              <Button
-                                type="button"
-                                size="sm"
-                                disabled={loading || mediaBusy}
-                                onClick={() => void captureFromCamera()}
-                              >
-                                Capturar
-                              </Button>
-                              <Button type="button" size="sm" variant="outline" onClick={stopCamera}>
-                                Fechar
-                              </Button>
-                            </>
-                          )}
                         </div>
 
-                        {cameraOpen && (
-                          <video ref={videoRef} autoPlay muted playsInline className="w-full rounded border" />
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={captureMode === 'file' ? 'default' : 'outline'}
+                            disabled={loading || mediaBusy}
+                            onClick={() => setCaptureMode('file')}
+                          >
+                            <Upload className="mr-1 h-4 w-4" />
+                            Arquivo
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={captureMode === 'webcam' ? 'default' : 'outline'}
+                            disabled={loading || mediaBusy}
+                            onClick={() => setCaptureMode('webcam')}
+                          >
+                            <Camera className="mr-1 h-4 w-4" />
+                            Webcam
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={captureMode === 'network' ? 'default' : 'outline'}
+                            disabled={loading || mediaBusy}
+                            onClick={() => setCaptureMode('network')}
+                          >
+                            <Link2 className="mr-1 h-4 w-4" />
+                            Rede
+                          </Button>
+                        </div>
+
+                        {captureMode === 'file' && (
+                          <div className="rounded-lg border bg-muted/20 p-3">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleFileInputChange}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full"
+                              disabled={loading || mediaBusy}
+                              onClick={() => fileInputRef.current?.click()}
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Selecionar imagem
+                            </Button>
+                          </div>
                         )}
-                        {cameraError && <p className="text-xs text-red-600">{cameraError}</p>}
-                      </div>
-                    )}
 
-                    {captureMode === 'network' && (
-                      <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
-                        <Input
-                          value={networkImageUrl}
-                          onChange={(event) => setNetworkImageUrl(event.target.value)}
-                          placeholder="http://ip-camera/snapshot.jpg"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full"
-                          disabled={loading || mediaBusy}
-                          onClick={() => void captureFromNetwork()}
-                        >
-                          <Link2 className="mr-2 h-4 w-4" />
-                          {mediaBusy ? 'Capturando...' : 'Capturar por URL'}
-                        </Button>
-                      </div>
-                    )}
+                        {captureMode === 'webcam' && (
+                          <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+                            {cameraDevices.length > 0 ? (
+                              <Select value={selectedCameraId} onValueChange={setSelectedCameraId}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecionar camera" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {cameraDevices.map((device, index) => (
+                                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                                      {device.label || `Camera ${index + 1}`}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">Nenhuma camera identificada ainda.</p>
+                            )}
 
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <p>Foto vinculada no momento do cadastro/entrada.</p>
-                      {pendingPhotoFile && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="h-auto px-1 py-0 text-xs"
-                          disabled={loading || mediaBusy}
-                          onClick={clearPhotoSelection}
-                        >
-                          Remover foto
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                            <div className="flex flex-wrap gap-2">
+                              {!cameraOpen ? (
+                                <Button type="button" size="sm" variant="outline" onClick={() => void startCamera()}>
+                                  <Camera className="mr-2 h-4 w-4" />
+                                  Abrir camera
+                                </Button>
+                              ) : (
+                                <>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={loading || mediaBusy}
+                                    onClick={() => void captureFromCamera()}
+                                  >
+                                    Capturar
+                                  </Button>
+                                  <Button type="button" size="sm" variant="outline" onClick={stopCamera}>
+                                    Fechar
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+
+                            {cameraOpen && (
+                              <video ref={videoRef} autoPlay muted playsInline className="w-full rounded border" />
+                            )}
+                            {cameraError && <p className="text-xs text-red-600">{cameraError}</p>}
+                          </div>
+                        )}
+
+                        {captureMode === 'network' && (
+                          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                            <Input
+                              value={networkImageUrl}
+                              onChange={(event) => setNetworkImageUrl(event.target.value)}
+                              placeholder="http://ip-camera/snapshot.jpg"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full"
+                              disabled={loading || mediaBusy}
+                              onClick={() => void captureFromNetwork()}
+                            >
+                              <Link2 className="mr-2 h-4 w-4" />
+                              {mediaBusy ? 'Capturando...' : 'Capturar por URL'}
+                            </Button>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <p>Foto vinculada no momento do cadastro/entrada.</p>
+                          {pendingPhotoFile && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-auto px-1 py-0 text-xs"
+                              disabled={loading || mediaBusy}
+                              onClick={clearPhotoSelection}
+                            >
+                              Remover foto
+                            </Button>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="entry" className="space-y-2 text-sm">
+                        {lastEntry ? (
+                          <>
+                            <p>
+                              <span className="font-semibold">Placa:</span> {lastEntry.vehicle.plate}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Condutor:</span>{' '}
+                              {lastEntry.driver?.fullName ?? 'Nao informado'}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Vaga:</span> {lastEntry.spot.code}
+                            </p>
+                            <p>
+                              <span className="font-semibold">Entrada:</span>{' '}
+                              {new Date(lastEntry.entryAt).toLocaleString('pt-BR')}
+                            </p>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              <Button size="sm" variant="outline" asChild>
+                                <Link to="/guardhouse/exit">Ir para registrar saida</Link>
+                              </Button>
+                              <Button size="sm" variant="outline" asChild>
+                                <Link to={`/guardhouse/vehicles/${lastEntry.vehicle.id}`}>Abrir detalhes do veiculo</Link>
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground">Nenhuma entrada registrada nesta sessao.</p>
+                        )}
+                      </TabsContent>
+                    </CardContent>
+                  </Card>
+                </Tabs>
               </div>
             </div>
           </form>
@@ -1241,36 +1311,6 @@ const GuardhouseEntry = () => {
           </Table>
         </CardContent>
       </Card>
-
-      {lastEntry && (
-        <Card className="border-indigo-300 bg-indigo-50/50">
-          <CardHeader>
-            <CardTitle>Entrada registrada com sucesso</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="font-semibold">Placa:</span> {lastEntry.vehicle.plate}
-            </p>
-            <p>
-              <span className="font-semibold">Condutor:</span> {lastEntry.driver?.fullName ?? 'Nao informado'}
-            </p>
-            <p>
-              <span className="font-semibold">Vaga:</span> {lastEntry.spot.code}
-            </p>
-            <p>
-              <span className="font-semibold">Entrada:</span> {new Date(lastEntry.entryAt).toLocaleString('pt-BR')}
-            </p>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/guardhouse/exit">Ir para registrar saida</Link>
-              </Button>
-              <Button size="sm" variant="outline" asChild>
-                <Link to={`/guardhouse/vehicles/${lastEntry.vehicle.id}`}>Abrir detalhes do veiculo</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {lastRegistered && (
         <Card className="border-emerald-300 bg-emerald-50/50">

@@ -4,12 +4,13 @@ import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Check, X as XIcon, LogOut, UserPlus, Calendar as CalendarIcon, User as UserIcon, Building, Hash, Search, Filter, FileDown } from "lucide-react";
+import { Plus, Check, X as XIcon, LogOut, UserPlus, Calendar as CalendarIcon, User as UserIcon, Building, Hash, Search, Filter, FileDown, MessageCircle } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { useAuth } from '../context/AuthContext';
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { generateWhatsAppLink } from '../lib/formatters';
 
 interface Visitor {
   id: string;
@@ -121,7 +122,7 @@ const Visits = () => {
         `Data/Hora: ${visit.date ? new Date(visit.date).toLocaleString() : 'N/A'}`,
         `Código de Acesso: ${visit.accessCode ?? 'N/A'}`,
         `Motivo: ${visit.motive ?? 'N/A'}`,
-        `Anfitrião: ${visit.host?.name ?? 'N/A'}`
+        `Responsável: ${visit.host?.name ?? 'N/A'}`
       ];
 
       let y = 42;
@@ -282,7 +283,7 @@ const Visits = () => {
                 </div>
                 {visit.host && (
                     <div className="ml-6 text-xs text-muted-foreground">
-                        Anfitrião: {visit.host.name}
+                        Responsável: {visit.host.name}
                     </div>
                 )}
                  <div className="flex items-center gap-2 text-muted-foreground">
@@ -300,16 +301,39 @@ const Visits = () => {
                 </div>
               </CardContent>
               {canManageVisits && (
-                  <CardFooter className="bg-muted/30 p-3 flex justify-end gap-2">
+                  <CardFooter className="bg-muted/30 p-3 flex flex-wrap justify-end gap-2">
                     {visit.status !== 'CANCELLED' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
-                        onClick={() => handleGeneratePdf(visit)}
-                      >
-                        <FileDown className="h-3 w-3 mr-1" /> Gerar PDF
-                      </Button>
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
+                          onClick={() => {
+                            const link = generateWhatsAppLink(visit.visitor.phone, {
+                              visitorName: visit.visitor.name,
+                              departmentName: visit.department?.name || 'Não informado',
+                              date: visit.date,
+                              accessCode: visit.accessCode || '',
+                              motive: visit.motive
+                            });
+                            if (link) {
+                              window.open(link, '_blank');
+                            } else {
+                              alert('Visitante sem número de telefone cadastrado.');
+                            }
+                          }}
+                        >
+                          <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+                          onClick={() => handleGeneratePdf(visit)}
+                        >
+                          <FileDown className="h-3 w-3 mr-1" /> Gerar PDF
+                        </Button>
+                      </>
                     )}
                     {visit.status === 'PENDING' && (
                         <>

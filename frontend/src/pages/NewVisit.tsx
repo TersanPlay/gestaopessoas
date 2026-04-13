@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -12,11 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Check, ChevronsUpDown, UserPlus } from "lucide-react";
+import { ArrowLeft, Check, ChevronsUpDown, UserPlus, MessageCircle } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { useAuth } from '../context/AuthContext';
 import { cn } from "@/lib/utils";
+import { generateWhatsAppLink } from '../lib/formatters';
 
 interface Visitor {
   id: string;
@@ -47,7 +49,11 @@ const NewVisit = () => {
   const [isVisitorPopoverOpen, setIsVisitorPopoverOpen] = useState(false);
   const [visitorSearch, setVisitorSearch] = useState('');
 
-  // Form states
+  const [successModalData, setSuccessModalData] = useState<{
+    isOpen: boolean;
+    whatsappLink: string;
+  }>({ isOpen: false, whatsappLink: '' });
+
   const [newVisit, setNewVisit] = useState({
     visitorId: '',
     departmentId: '',
@@ -84,6 +90,18 @@ const NewVisit = () => {
     return () => window.cancelAnimationFrame(frameId);
   }, [user]);
 
+  const handleCreateAnotherVisit = () => {
+    setSuccessModalData({ isOpen: false, whatsappLink: '' });
+    setIsVisitorPopoverOpen(false);
+    setVisitorSearch('');
+    setNewVisit({
+      visitorId: '',
+      departmentId: user?.role === 'COLABORADOR' ? (user.departmentId ?? '') : '',
+      date: '',
+      motive: ''
+    });
+  };
+
   const handleCreateVisit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -93,8 +111,24 @@ const NewVisit = () => {
     }
 
     try {
-      await api.post('/visits', newVisit);
-      navigate('/visits');
+      const response = await api.post('/visits', newVisit);
+      const createdVisit = response.data;
+      
+      const visitor = visitors.find(v => v.id === newVisit.visitorId);
+      const department = departments.find(d => d.id === newVisit.departmentId);
+
+      if (visitor) {
+        const link = generateWhatsAppLink(visitor.phone, {
+          visitorName: visitor.name,
+          departmentName: department?.name || 'Não informado',
+          date: createdVisit.date,
+          accessCode: createdVisit.accessCode,
+          motive: createdVisit.motive
+        });
+        setSuccessModalData({ isOpen: true, whatsappLink: link });
+      } else {
+        navigate('/visits');
+      }
     } catch (error) {
       console.error('Failed to create visit', error);
       alert('Erro ao criar visita');
@@ -288,9 +322,43 @@ const NewVisit = () => {
         onOpenChange={setIsVisitorDialogOpen}
         onSuccess={handleCreateVisitorSuccess}
       />
+
+      <Dialog open={successModalData.isOpen} onOpenChange={(open) => {
+        if (!open) navigate('/visits');
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Visita Agendada com Sucesso!</DialogTitle>
+            <DialogDescription>
+              A visita foi registrada. Você pode compartilhar as informações com o visitante pelo WhatsApp.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <Button 
+              className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
+              onClick={() => {
+                if (successModalData.whatsappLink) {
+                  window.open(successModalData.whatsappLink, '_blank');
+                }
+              }}
+              disabled={!successModalData.whatsappLink}
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              {successModalData.whatsappLink ? 'Enviar Confirmação pelo WhatsApp' : 'Visitante sem número de telefone'}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button className="btn-hero" onClick={handleCreateAnotherVisit}>
+              Cadastrar Nova Visita
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/visits')}>
+              Voltar para Visitas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default NewVisit;
-

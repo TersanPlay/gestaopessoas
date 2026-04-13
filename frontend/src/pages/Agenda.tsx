@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,7 +219,7 @@ const Agenda = () => {
                               {visit.host && (
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                   <Building className="h-3.5 w-3.5" />
-                                  <span className="truncate">Anfitriao: {visit.host.name}</span>
+                                  <span className="truncate">Responsável: {visit.host.name}</span>
                                 </div>
                               )}
                             </div>
@@ -342,7 +342,7 @@ const Agenda = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                   <User className="h-3 w-3" />
-                                  <span className="truncate">{visit.host?.name || 'Sem anfitriao'}</span>
+                                  <span className="truncate">{visit.host?.name || 'Sem responsável'}</span>
                                 </div>
                               </div>
 

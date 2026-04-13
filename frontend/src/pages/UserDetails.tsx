@@ -20,7 +20,7 @@ import type { AppUser } from '../types/user';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatDateLabel, maskDocument } from '@/lib/formatters';
+import { formatCpf, formatDateLabel } from '@/lib/formatters';
 
 const fallback = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === '') {
@@ -48,9 +48,9 @@ const DetailItem = ({
   value: string;
   subtle?: boolean;
 }) => (
-  <div className="rounded-2xl border border-border/60 bg-muted/40 p-4">
-    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
-    <p className={`mt-2 text-sm ${subtle ? 'text-muted-foreground' : 'text-foreground'}`}>{value}</p>
+  <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4">
+    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{label}</p>
+    <p className={`mt-2 text-sm ${subtle ? 'text-slate-300' : 'text-slate-100'}`}>{value}</p>
   </div>
 );
 
@@ -65,15 +65,15 @@ const SectionBlock = ({
   description: string;
   children: ReactNode;
 }) => (
-  <Card className="card-corporate overflow-hidden shadow-elevated">
-    <CardHeader className="border-b border-border/60 bg-muted/40">
+  <Card className="overflow-hidden border-slate-800 bg-slate-950 text-slate-100 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.95)]">
+    <CardHeader className="border-b border-slate-800/80 bg-slate-900/70">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800 text-slate-100">
           <Icon className="h-5 w-5" />
         </div>
         <div className="space-y-1">
-          <CardTitle className="text-xl text-foreground">{title}</CardTitle>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <CardTitle className="text-xl text-white">{title}</CardTitle>
+          <p className="text-sm text-slate-400">{description}</p>
         </div>
       </div>
     </CardHeader>
@@ -151,14 +151,14 @@ export default function UserDetails() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="relative overflow-hidden rounded-[28px] border border-border/70 bg-card text-foreground shadow-elevated">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--primary)/0.18),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(79,70,229,0.22),transparent_32%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--card)))]" />
+      <div className="relative overflow-hidden rounded-[32px] border border-slate-800 bg-slate-950 text-slate-50 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.95)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(148,163,184,0.28),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(51,65,85,0.65),_transparent_35%),linear-gradient(135deg,_rgba(15,23,42,0.96),_rgba(30,41,59,0.98))]" />
         <div className="relative z-10 p-6 sm:p-8 lg:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-5">
               <Button
                 variant="ghost"
-                className="w-fit border border-border/60 bg-muted/40 text-foreground hover:bg-muted/60"
+                className="w-fit border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10 hover:text-white"
                 onClick={() => navigate(isOwnProfile ? '/settings' : '/users')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -167,54 +167,54 @@ export default function UserDetails() {
 
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-teal-500/40 bg-teal-600/20 px-3 py-1 text-xs font-medium text-mauve-50">
+                  <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200">
                     {authProviderLabel(user.authProvider)}
                   </span>
-                  <span className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs font-medium text-foreground">
+                  <span className="rounded-full border border-slate-500/40 bg-slate-800/70 px-3 py-1 text-xs font-medium text-slate-200">
                     {roleLabel(user.role)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm uppercase tracking-[0.28em] text-muted-foreground">{headline}</p>
-                  <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-foreground">{user.name}</h1>
+                  <p className="text-sm uppercase tracking-[0.28em] text-slate-400">{headline}</p>
+                  <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{user.name}</h1>
                 </div>
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                <p className="max-w-2xl text-sm leading-6 text-slate-300">
                   Visualização completa do cadastro sincronizado, organizada por identidade, vínculo profissional e dados contratuais.
                 </p>
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="card-corporate border border-border/70 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Matrícula</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{fallback(user.matricula)}</p>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Matrícula</p>
+                <p className="mt-2 text-lg font-semibold text-white">{fallback(user.matricula)}</p>
               </div>
-              <div className="card-corporate border border-border/70 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">CPF</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">{maskDocument(user.cpf) || '-'}</p>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">CPF</p>
+                <p className="mt-2 text-lg font-semibold text-white">{formatCpf(user.cpf)}</p>
               </div>
-              <div className="card-corporate border border-border/70 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Carga Horária</p>
-                <p className="mt-2 text-lg font-semibold text-foreground">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Carga Horária</p>
+                <p className="mt-2 text-lg font-semibold text-white">
                   {user.cargaHorariaSemanal ? `${user.cargaHorariaSemanal}h/semana` : '-'}
                 </p>
               </div>
             </div>
           </div>
 
-          <Separator className="my-6 bg-border/70" />
+          <Separator className="my-6 bg-white/10" />
 
-          <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:flex-wrap">
+          <div className="flex flex-col gap-3 text-sm text-slate-300 sm:flex-row sm:flex-wrap">
             <div className="inline-flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground/80" />
+              <Mail className="h-4 w-4 text-slate-400" />
               {user.email || 'Sem e-mail cadastrado'}
             </div>
             <div className="inline-flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground/80" />
+              <Building2 className="h-4 w-4 text-slate-400" />
               Departamento interno: {user.department?.name || 'Não vinculado'}
             </div>
             <div className="inline-flex items-center gap-2">
-              <BadgeCheck className="h-4 w-4 text-muted-foreground/80" />
+              <BadgeCheck className="h-4 w-4 text-slate-400" />
               Atualizado em {formatDateLabel(user.updatedAt || null)}
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function UserDetails() {
         >
           <DetailItem label="Nome" value={fallback(user.name)} />
           <DetailItem label="Matrícula" value={fallback(user.matricula)} />
-          <DetailItem label="CPF" value={maskDocument(user.cpf) || '-'} />
+          <DetailItem label="CPF" value={formatCpf(user.cpf)} />
           <DetailItem label="E-mail" value={user.email || 'Sem e-mail cadastrado'} subtle />
           <DetailItem label="Perfil no sistema" value={roleLabel(user.role)} subtle />
           <DetailItem label="Origem da conta" value={authProviderLabel(user.authProvider)} subtle />
@@ -265,17 +265,17 @@ export default function UserDetails() {
         </SectionBlock>
       </div>
 
-      <Card className="card-corporate border border-border/70 bg-card/95">
-        <CardContent className="flex flex-col gap-4 p-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <Card className="border-slate-200 bg-white/90 shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-6 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="font-medium text-foreground">Resumo de integração</p>
-            <p className="text-muted-foreground">
+            <p className="font-medium text-slate-900">Resumo de integração</p>
+            <p>
               Os campos da API externa exibidos nesta página são: matrícula, CPF, nome, cargo, lotação,
               função, vínculo, data de admissão, data de demissão e carga horária semanal.
             </p>
           </div>
           {isOwnProfile ? (
-            <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button asChild className="bg-slate-900 hover:bg-slate-800">
               <Link to="/settings">
                 <Shield className="mr-2 h-4 w-4" />
                 Gerenciar senha e preferências
@@ -293,30 +293,30 @@ export default function UserDetails() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="card-corporate border border-border/70">
+        <Card className="border-slate-200">
           <CardContent className="flex items-center gap-3 p-5">
-            <Building2 className="h-5 w-5 text-primary" />
+            <Building2 className="h-5 w-5 text-slate-500" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Lotação</p>
-              <p className="font-medium text-foreground">{fallback(user.lotacao)}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Lotação</p>
+              <p className="font-medium text-slate-900">{fallback(user.lotacao)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="card-corporate border border-border/70">
+        <Card className="border-slate-200">
           <CardContent className="flex items-center gap-3 p-5">
-            <CalendarClock className="h-5 w-5 text-primary" />
+            <CalendarClock className="h-5 w-5 text-slate-500" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Admissão</p>
-              <p className="font-medium text-foreground">{formatDateLabel(user.dataAdmissao)}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Admissão</p>
+              <p className="font-medium text-slate-900">{formatDateLabel(user.dataAdmissao)}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="card-corporate border border-border/70">
+        <Card className="border-slate-200">
           <CardContent className="flex items-center gap-3 p-5">
-            <UserCircle2 className="h-5 w-5 text-primary" />
+            <UserCircle2 className="h-5 w-5 text-slate-500" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Função</p>
-              <p className="font-medium text-foreground">{fallback(user.funcao)}</p>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Função</p>
+              <p className="font-medium text-slate-900">{fallback(user.funcao)}</p>
             </div>
           </CardContent>
         </Card>

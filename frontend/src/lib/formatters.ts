@@ -52,3 +52,40 @@ export const formatDateLabel = (value: string | undefined | null) => {
 
   return parsed.toLocaleDateString('pt-BR');
 };
+
+export const formatWhatsAppPhone = (phone: string | undefined | null) => {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length <= 11) {
+    return `55${digits}`;
+  }
+  return digits;
+};
+
+export const generateWhatsAppLink = (
+  phone: string | undefined | null,
+  visit: {
+    visitorName: string;
+    departmentName: string;
+    date: string;
+    accessCode: string;
+    motive: string;
+  }
+) => {
+  const formattedPhone = formatWhatsAppPhone(phone);
+  if (!formattedPhone) return '';
+
+  const dateStr = visit.date ? new Date(visit.date).toLocaleString('pt-BR') : 'Data não informada';
+  
+  const text = `*Confirmação de Agendamento de Visita* 🏢\n\n` +
+    `Olá *${visit.visitorName}*,\nSua visita foi agendada com sucesso!\n\n` +
+    `*Detalhes da Visita:*\n` +
+    `📍 *Local:* ${visit.departmentName}\n` +
+    `📅 *Data/Hora:* ${dateStr}\n` +
+    `🔑 *Código de Acesso:* ${visit.accessCode}\n` +
+    `📝 *Motivo:* ${visit.motive}\n\n` +
+    `Apresente este código na portaria para liberar seu acesso.`;
+
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
+};

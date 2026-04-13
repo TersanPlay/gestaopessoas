@@ -286,7 +286,7 @@ export default function Landing() {
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Gestão de Visitantes</h3>
                   <p className="text-gray-600 text-sm">
-                    Registro digital rápido, histórico de visitas e notificações automáticas para os anfitriões.
+                    Registro digital rápido, histórico de visitas e notificações automáticas para os responsáveis.
                   </p>
                 </CardContent>
               </Card>

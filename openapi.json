@@ -1,0 +1,308 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API de Autenticação de Servidores",
+    "version": "1.0.0",
+    "description": "API para autenticação e consulta de dados de servidores públicos. Utiliza API Key via header para autenticação dos sistemas integrados.",
+    "contact": {
+      "name": "Equipe de TI"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://syqqkqdvyxkyqqniguds.supabase.co/functions/v1/autenticar",
+      "description": "Edge Function - Produção"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Verifica se a API está online e retorna informações básicas.",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "API online",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                },
+                "example": {
+                  "status": "online",
+                  "timestamp": "2025-01-01T00:00:00.000Z",
+                  "version": "1.0.0"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Autenticar Servidor",
+        "description": "Autentica um servidor público pela matrícula e CPF, retornando os dados conforme as permissões do sistema.",
+        "operationId": "autenticarServidor",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequest"
+              },
+              "example": {
+                "matricula": "12345",
+                "cpf": "000.000.000-00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autenticação bem-sucedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "sucesso": true,
+                  "mensagem": "Autenticação realizada com sucesso.",
+                  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                  "servidor": {
+                    "matricula": "12345",
+                    "cpf": "000.000.000-00",
+                    "nome": "João da Silva",
+                    "cargo": "Analista Administrativo",
+                    "lotacao": "Departamento de TI"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "Campos 'matricula' e 'cpf' são obrigatórios."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API Key inválida ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "API Key inválida."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sistema inativo ou IP não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "Sistema inativo."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Servidor não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "Servidor não encontrado com a matrícula e CPF informados."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit excedido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "Rate limit excedido. Máximo: 60 requisições/minuto."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "sucesso": false,
+                  "mensagem": "Erro interno do servidor."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Chave de API do sistema integrado, obtida no painel de administração."
+      }
+    },
+    "schemas": {
+      "AuthRequest": {
+        "type": "object",
+        "required": [
+          "matricula",
+          "cpf"
+        ],
+        "properties": {
+          "matricula": {
+            "type": "string",
+            "description": "Matrícula do servidor",
+            "example": "12345"
+          },
+          "cpf": {
+            "type": "string",
+            "description": "CPF do servidor (com ou sem formatação)",
+            "example": "000.000.000-00"
+          }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "sucesso": {
+            "type": "boolean",
+            "example": true
+          },
+          "mensagem": {
+            "type": "string",
+            "example": "Autenticação realizada com sucesso."
+          },
+          "token": {
+            "type": "string",
+            "description": "JWT token para sessão",
+            "example": "eyJhbGciOiJIUzI1NiI..."
+          },
+          "servidor": {
+            "$ref": "#/components/schemas/Servidor"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "sucesso": {
+            "type": "boolean",
+            "example": false
+          },
+          "mensagem": {
+            "type": "string",
+            "example": "API Key inválida."
+          }
+        }
+      },
+      "HealthCheckResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "online"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          }
+        }
+      },
+      "Servidor": {
+        "type": "object",
+        "description": "Dados do servidor público. Campos retornados dependem das permissões do sistema.",
+        "properties": {
+          "matricula": {
+            "type": "string",
+            "example": "12345"
+          },
+          "cpf": {
+            "type": "string",
+            "example": "000.000.000-00"
+          },
+          "nome": {
+            "type": "string",
+            "example": "João da Silva"
+          },
+          "cargo": {
+            "type": "string",
+            "example": "Analista Administrativo"
+          },
+          "lotacao": {
+            "type": "string",
+            "example": "Departamento de TI"
+          },
+          "funcao": {
+            "type": "string",
+            "nullable": true,
+            "example": "Coordenador"
+          },
+          "vinculo": {
+            "type": "string",
+            "nullable": true,
+            "example": "Efetivo"
+          },
+          "data_admissao": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "data_demissao": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "carga_horaria_semanal": {
+            "type": "integer",
+            "nullable": true,
+            "example": 40
+          }
+        }
+      }
+    }
+  }
+}
