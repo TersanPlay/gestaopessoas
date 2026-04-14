@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Loader2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Search, RefreshCcw } from 'lucide-react';
 
 interface Department {
   id: string;
@@ -21,6 +21,8 @@ interface Department {
   description?: string;
   responsible?: string;
   location?: string;
+  employeeCount?: number | null;
+  lastSyncedAt?: string | null;
 }
 
 const Departments = () => {
@@ -30,9 +32,23 @@ const Departments = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentDept, setCurrentDept] = useState<Partial<Department>>({});
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const isAdmin = user?.role === 'ADMIN';
+  const lastSyncedAt = departments.reduce<string | null>((latest, department) => {
+    if (!department.lastSyncedAt) {
+      return latest;
+    }
+
+    if (!latest) {
+      return department.lastSyncedAt;
+    }
+
+    return new Date(department.lastSyncedAt) > new Date(latest)
+      ? department.lastSyncedAt
+      : latest;
+  }, null);
 
   const filteredDepartments = departments.filter(dept => 
     dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,6 +69,20 @@ const Departments = () => {
       console.error('Failed to fetch departments', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncDepartments = async () => {
+    setSyncing(true);
+    try {
+      const response = await api.post('/departments/sync');
+      setDepartments(response.data.departments);
+      alert('Lotações sincronizadas com sucesso.');
+    } catch (error) {
+      console.error('Failed to sync departments', error);
+      alert('Erro ao sincronizar lotações.');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -100,11 +130,32 @@ const Departments = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gradient">Departamentos</h1>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-gradient">Departamentos</h1>
+          {lastSyncedAt && (
+            <p className="text-sm text-muted-foreground">
+              Ultima sincronizacao: {new Date(lastSyncedAt).toLocaleString('pt-BR')}
+            </p>
+          )}
+        </div>
         {isAdmin && (
-          <Button onClick={openNewDialog} className="btn-hero">
-            <Plus className="mr-2 h-4 w-4" /> Novo Departamento
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSyncDepartments}
+              disabled={syncing}
+            >
+              {syncing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="mr-2 h-4 w-4" />
+              )}
+              Sincronizar Lotacoes
+            </Button>
+            <Button onClick={openNewDialog} className="btn-hero">
+              <Plus className="mr-2 h-4 w-4" /> Novo Departamento
+            </Button>
+          </div>
         )}
       </div>
       
@@ -132,6 +183,11 @@ const Departments = () => {
                 <CardTitle className="text-xl text-primary">{dept.name}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {typeof dept.employeeCount === 'number' && (
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold">Servidores ativos:</span> {dept.employeeCount}
+                  </p>
+                )}
                 {dept.description && <p className="text-muted-foreground">{dept.description}</p>}
                 {dept.responsible && (
                   <p className="text-sm text-muted-foreground"><span className="font-semibold">Responsável:</span> {dept.responsible}</p>
@@ -155,7 +211,12 @@ const Departments = () => {
           {filteredDepartments.length === 0 && (
              <div className="col-span-full text-center py-12 text-muted-foreground bg-white rounded-lg border border-dashed">
                 <p>Nenhum departamento encontrado.</p>
-                {isAdmin && <Button variant="link" onClick={openNewDialog}>Criar o primeiro</Button>}
+                {isAdmin && (
+                  <div className="flex justify-center gap-2">
+                    <Button variant="link" onClick={handleSyncDepartments}>Sincronizar lotacoes</Button>
+                    <Button variant="link" onClick={openNewDialog}>Criar manualmente</Button>
+                  </div>
+                )}
              </div>
           )}
         </div>

@@ -16,7 +16,7 @@ interface Visit {
         document: string;
         photo?: string;
     };
-    department: {
+    department?: {
         name: string;
     };
     date: string;
@@ -178,7 +178,7 @@ export default function TotemFinish() {
                             <CardContent className="p-6 flex items-center justify-between">
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-xl text-gray-800">{visit.visitor.name}</h3>
-                                    <p className="text-gray-500">{visit.department.name}</p>
+                                    <p className="text-gray-500">{visit.department?.name || 'Sem departamento'}</p>
                                     <p className="text-sm text-gray-400">Entrada: {new Date(visit.date).toLocaleTimeString()}</p>
                                 </div>
                                 <Button 

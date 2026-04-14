@@ -16,7 +16,7 @@ interface VisitHistory {
   motive: string;
   status: 'PENDING' | 'CHECKIN' | 'CHECKOUT' | 'CANCELLED';
   accessCode?: string;
-  department: { name: string };
+  department?: { name: string };
   host?: { name: string };
 }
 

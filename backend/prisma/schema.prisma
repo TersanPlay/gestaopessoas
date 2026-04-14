@@ -81,7 +81,7 @@ model User {
   dataDemissao          DateTime?                     @db.Date
   cargaHorariaSemanal   Int?
   departmentId          String?
-  department            Department?                   @relation(fields: [departmentId], references: [id])
+  department            Department?                   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdAt             DateTime                      @default(now())
   updatedAt             DateTime                      @updatedAt
   hostedVisits          Visit[]                       @relation("HostVisits")
@@ -100,6 +100,8 @@ model Department {
   description         String?
   responsible         String?
   location            String?
+  employeeCount       Int?
+  lastSyncedAt        DateTime?
   users               User[]
   visits              Visit[]
   guardhouseDrivers   GuardhouseDriver[]
@@ -139,8 +141,8 @@ model Visit {
   visitorId String
   visitor   Visitor @relation(fields: [visitorId], references: [id])
 
-  departmentId String
-  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   hostId String?
   host   User?   @relation("HostVisits", fields: [hostId], references: [id])
@@ -180,7 +182,7 @@ model GuardhouseDriver {
   phone        String?
   category     VehicleCategory             @default(VISITOR)
   departmentId String?
-  department   Department?                 @relation(fields: [departmentId], references: [id])
+  department   Department?                 @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   notes        String?
   isActive     Boolean                     @default(true)
   createdAt    DateTime                    @default(now())
@@ -216,7 +218,7 @@ model GuardhouseVehicleMovement {
   spotId                  String
   spot                    GuardhouseParkingSpot         @relation(fields: [spotId], references: [id])
   destinationDepartmentId String?
-  destinationDepartment   Department?                   @relation("GuardhouseDestination", fields: [destinationDepartmentId], references: [id])
+  destinationDepartment   Department?                   @relation("GuardhouseDestination", fields: [destinationDepartmentId], references: [id], onDelete: SetNull)
   accessCategory          VehicleCategory
   visitReason             String?
   entryAt                 DateTime                      @default(now())
