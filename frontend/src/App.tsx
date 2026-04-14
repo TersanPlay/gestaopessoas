@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import type { ReactNode } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
 import FirstAccess from './pages/FirstAccess';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
@@ -78,6 +79,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/first-access" element={<FirstAccess />} />
           <Route path="/privacy" element={<Privacy />} />
           

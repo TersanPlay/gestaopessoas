@@ -55,6 +55,18 @@ export class UserRepository {
     });
   }
 
+  async findByMatricula(matricula: string) {
+    return prisma.user.findUnique({
+      where: { matricula },
+    });
+  }
+
+  async findByCpf(cpf: string) {
+    return prisma.user.findUnique({
+      where: { cpf },
+    });
+  }
+
   async findByMatriculaAndCpf(matricula: string, cpf: string) {
     return prisma.user.findFirst({
       where: { matricula, cpf },

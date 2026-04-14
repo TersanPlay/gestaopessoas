@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building, CalendarCheck, Clock } from 'lucide-react';
+import { Users, Building, CalendarCheck, Clock, IdCard, Mail } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -67,6 +67,40 @@ const Dashboard = () => {
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Perfil autenticado</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-primary/10 bg-white p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              <IdCard className="h-4 w-4" />
+              Nome
+            </div>
+            <p className="mt-2 text-sm text-foreground">{user?.name || '-'}</p>
+          </div>
+          <div className="rounded-2xl border border-primary/10 bg-white p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              <Building className="h-4 w-4" />
+              Cargo e lotação
+            </div>
+            <p className="mt-2 text-sm text-foreground">
+              {user?.cargo || 'Cargo não informado'}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {user?.lotacao || 'Lotação não informada'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-primary/10 bg-white p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
+              <Mail className="h-4 w-4" />
+              E-mail institucional
+            </div>
+            <p className="mt-2 text-sm text-foreground">{user?.email || '-'}</p>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

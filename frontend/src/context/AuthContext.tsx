@@ -6,18 +6,25 @@ import type {
   AdminLoginCredentials,
   AppUser,
   FirstAccessCredentials,
-  LoginCredentials,
 } from '../types/user';
 
 interface AuthContextData {
   signed: boolean;
   user: AppUser | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
   loginAdmin: (credentials: AdminLoginCredentials) => Promise<void>;
+  startInstitutionalLogin: () => void;
+  completeInstitutionalLogin: (code: string) => Promise<void>;
+  checkEmailFirstAccess: (email: string) => Promise<void>;
   completeFirstAccess: (credentials: FirstAccessCredentials) => Promise<void>;
   logout: () => void;
   loading: boolean;
   setUser: Dispatch<SetStateAction<AppUser | null>>;
+}
+
+interface SessionPayload {
+  user: AppUser;
+  token: string;
+  institutionalAccessToken?: string | null;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -46,38 +53,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const loading = false;
 
-  const establishSession = (payload: { user: AppUser; token: string }) => {
-    const { user: authenticatedUser, token } = payload;
+  const establishSession = (payload: SessionPayload) => {
+    const { user: authenticatedUser, token, institutionalAccessToken } = payload;
 
     localStorage.setItem('@gestao:user', JSON.stringify(authenticatedUser));
     localStorage.setItem('@gestao:token', token);
+    if (institutionalAccessToken) {
+      localStorage.setItem(
+        '@gestao:institutionalToken',
+        institutionalAccessToken,
+      );
+    } else {
+      localStorage.removeItem('@gestao:institutionalToken');
+    }
 
     api.defaults.headers.common.Authorization = `Bearer ${token}`;
     setUser(authenticatedUser);
   };
 
-  async function login(credentials: LoginCredentials) {
-    const response = await api.post('/auth/login', credentials);
-    establishSession(response.data as { user: AppUser; token: string });
-  }
-
   async function loginAdmin(credentials: AdminLoginCredentials) {
     const response = await api.post('/auth/admin/login', credentials);
-    establishSession(response.data as { user: AppUser; token: string });
+    establishSession(response.data as SessionPayload);
+  }
+
+  function startInstitutionalLogin() {
+    window.location.assign(`${api.defaults.baseURL}/auth/sso/start`);
+  }
+
+  async function completeInstitutionalLogin(code: string) {
+    const response = await api.post('/auth/sso/exchange', { code });
+    establishSession(response.data as SessionPayload);
+  }
+
+  async function checkEmailFirstAccess(email: string) {
+    await api.post('/auth/first-access/check-email', { email });
   }
 
   async function completeFirstAccess(credentials: FirstAccessCredentials) {
     const response = await api.post('/auth/first-access/complete', credentials);
-    const { user: authenticatedUser, token } = response.data as {
-      user: AppUser;
-      token: string;
-    };
+    const { user: authenticatedUser, token } = response.data as SessionPayload;
     establishSession({ user: authenticatedUser, token });
   }
 
   function logout() {
     localStorage.removeItem('@gestao:user');
     localStorage.removeItem('@gestao:token');
+    localStorage.removeItem('@gestao:institutionalToken');
     delete api.defaults.headers.common.Authorization;
     setUser(null);
   }
@@ -87,8 +108,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         signed: !!user,
         user,
-        login,
         loginAdmin,
+        startInstitutionalLogin,
+        completeInstitutionalLogin,
+        checkEmailFirstAccess,
         completeFirstAccess,
         logout,
         loading,

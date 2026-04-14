@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { isAxiosError } from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
-import { Fingerprint, KeyRound, Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Building2, Fingerprint, KeyRound, Loader2, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { formatCpfInput } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,23 +16,23 @@ import {
 import { Label } from '@/components/ui/label';
 
 type LoginMode = 'colaborador' | 'admin';
+type LoginRouteState = {
+  ssoError?: string;
+} | null;
 
 export default function Login() {
-  const { login, loginAdmin } = useAuth();
+  const { loginAdmin, startInstitutionalLogin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = location.state as LoginRouteState;
   const [mode, setMode] = useState<LoginMode>('colaborador');
-  const [matricula, setMatricula] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [password, setPassword] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [needsFirstAccess, setNeedsFirstAccess] = useState(false);
+  const [error, setError] = useState(routeState?.ssoError || '');
 
   const resetFeedback = () => {
     setError('');
-    setNeedsFirstAccess(false);
   };
 
   const handleModeChange = (nextMode: LoginMode) => {
@@ -41,31 +40,10 @@ export default function Login() {
     resetFeedback();
   };
 
-  const handleCollaboratorLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCollaboratorLogin = () => {
     setLoading(true);
     resetFeedback();
-
-    try {
-      await login({ matricula, cpf, password });
-      navigate('/dashboard');
-    } catch (loginError) {
-      console.error(loginError);
-
-      if (isAxiosError<{ message?: string; code?: string }>(loginError)) {
-        setNeedsFirstAccess(
-          loginError.response?.data?.code === 'FIRST_ACCESS_REQUIRED',
-        );
-        setError(
-          loginError.response?.data?.message ||
-            'Falha no login. Confira matrícula, CPF e senha.',
-        );
-      } else {
-        setError('Falha no login. Confira matrícula, CPF e senha.');
-      }
-    } finally {
-      setLoading(false);
-    }
+    startInstitutionalLogin();
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -98,12 +76,12 @@ export default function Login() {
       <Card className="relative w-full max-w-md overflow-hidden border-slate-200/80 bg-white/95 shadow-2xl backdrop-blur">
         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-700 via-slate-500 to-slate-300" />
         <CardHeader className="space-y-4 pb-4">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold text-slate-900">Acesso ao sistema</CardTitle>
-            <CardDescription className="text-slate-600">
+            <CardTitle className="text-2xl font-bold text-foreground">Acesso ao sistema</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Escolha o tipo de acesso para entrar com as credenciais corretas.
             </CardDescription>
           </div>
@@ -113,7 +91,7 @@ export default function Login() {
             <Button
               type="button"
               variant={mode === 'colaborador' ? 'default' : 'ghost'}
-              className={mode === 'colaborador' ? 'bg-slate-900 hover:bg-slate-800' : 'text-slate-600'}
+              className={mode === 'colaborador' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'text-muted-foreground'}
               onClick={() => handleModeChange('colaborador')}
             >
               <Fingerprint className="mr-2 h-4 w-4" />
@@ -122,7 +100,7 @@ export default function Login() {
             <Button
               type="button"
               variant={mode === 'admin' ? 'default' : 'ghost'}
-              className={mode === 'admin' ? 'bg-slate-900 hover:bg-slate-800' : 'text-slate-600'}
+              className={mode === 'admin' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'text-muted-foreground'}
               onClick={() => handleModeChange('admin')}
             >
               <Mail className="mr-2 h-4 w-4" />
@@ -131,62 +109,34 @@ export default function Login() {
           </div>
 
           {mode === 'colaborador' ? (
-            <form onSubmit={handleCollaboratorLogin} className="space-y-4">
+            <div className="space-y-4">
               <div className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                <p className="font-medium text-slate-900">Acesso via API externa</p>
-                <p>Entre com matrícula, CPF e senha local. Se ainda não tiver senha, use o primeiro acesso.</p>
+                <p className="font-medium text-slate-900">Acesso institucional via SSO</p>
+                <p>
+                  O login do colaborador agora acontece no portal institucional da Câmara Municipal.
+                  A validação, o primeiro acesso e a autenticação ficam centralizados no IdP.
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="matricula">Matrícula</Label>
-                <Input
-                  id="matricula"
-                  placeholder="Informe sua matrícula"
-                  value={matricula}
-                  onChange={(e) => setMatricula(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cpf">CPF</Label>
-                <Input
-                  id="cpf"
-                  inputMode="numeric"
-                  placeholder="000.000.000-00"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCpfInput(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+              <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-foreground">
+                <div className="flex items-center gap-2 font-medium text-primary">
+                  <Building2 className="h-4 w-4" />
+                  Entrar com Câmara Municipal
+                </div>
+                <p className="mt-2 text-muted-foreground">
+                  Você será redirecionado para o login institucional e voltará automaticamente ao sistema após a autenticação.
+                </p>
               </div>
               {error && <p className="text-center text-sm text-red-500">{error}</p>}
-              {needsFirstAccess && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-slate-300"
-                  onClick={() =>
-                    navigate('/first-access', {
-                      state: { matricula, cpf },
-                    })
-                  }
-                >
-                  Configurar primeiro acesso
-                </Button>
-              )}
-              <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800" disabled={loading}>
+              <Button
+                type="button"
+                onClick={handleCollaboratorLogin}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={loading}
+              >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
-                Entrar como colaborador
+                Entrar com Câmara Municipal
               </Button>
-            </form>
+            </div>
           ) : (
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
@@ -217,7 +167,7 @@ export default function Login() {
                 />
               </div>
               {error && <p className="text-center text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
                 Entrar como administrador
               </Button>
@@ -226,12 +176,7 @@ export default function Login() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2 text-center text-xs text-slate-500">
           {mode === 'colaborador' ? (
-            <>
-              <span>Administradores locais continuam gerenciando perfis e permissões do sistema.</span>
-              <Link to="/first-access" className="font-medium text-slate-700 hover:text-slate-900">
-                Primeiro acesso? Configure sua senha aqui
-              </Link>
-            </>
+            <span>Primeiro acesso, login e recuperação de identidade do colaborador agora são tratados pelo SSO institucional.</span>
           ) : (
             <span>O admin local padrão do seed continua vinculado ao e-mail configurado no ambiente.</span>
           )}

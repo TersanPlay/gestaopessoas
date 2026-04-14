@@ -28,8 +28,7 @@ export interface AppUser {
 }
 
 export interface LoginCredentials {
-  matricula: string;
-  cpf: string;
+  email: string;
   password: string;
 }
 
@@ -41,6 +40,7 @@ export interface AdminLoginCredentials {
 export interface FirstAccessCredentials {
   matricula: string;
   cpf: string;
+  email: string;
   password: string;
 }
 
