@@ -1,13 +1,30 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Users, Building, ArrowRight, CheckCircle2, BarChart3, Lock } from 'lucide-react';
+import { Shield, Users, Building, ArrowRight, CheckCircle2, BarChart3, Lock, Clock3, MapPin, Mail, Phone, Youtube } from 'lucide-react';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
 import { useEffect } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
   const { scrollY } = useScroll();
+  const institutionalImages = [
+    {
+      src: 'https://parauapebas.pa.leg.br/portal/images/Vereadores11052016.JPG',
+      title: 'Sessões plenárias',
+      description: 'Registros do plenário e das deliberações legislativas da Câmara.',
+    },
+    {
+      src: 'https://parauapebas.pa.leg.br/portal/images/Bruno080915.jpg',
+      title: 'Atuação parlamentar',
+      description: 'Imagem institucional vinculada às atividades e debates realizados pela Casa.',
+    },
+    {
+      src: 'https://parauapebas.pa.leg.br/portal/images/MiquinhaNaMesa.JPG',
+      title: 'Mesa diretora e plenário',
+      description: 'Ambiente de trabalho legislativo e organização institucional da Câmara Municipal.',
+    },
+  ];
   
   // Mouse Parallax Logic
   const mouseX = useMotionValue(0);
@@ -55,14 +72,8 @@ export default function Landing() {
               SC
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-500">
-              Sistema Corporativo
+              Câmara Municipal de Parauapebas
             </span>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
-            <a href="#features" className="hover:text-indigo-600 transition-colors">Funcionalidades</a>
-            <a href="#security" className="hover:text-indigo-600 transition-colors">Segurança</a>
-            <a href="#about" className="hover:text-indigo-600 transition-colors">Sobre</a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -70,7 +81,7 @@ export default function Landing() {
               Login
             </Button>
             <Button onClick={() => navigate('/login')} className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:scale-105">
-              Começar Agora
+              Acessar Sistema
             </Button>
           </div>
         </div>
@@ -104,7 +115,7 @@ export default function Landing() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                   </span>
-                  Versão 2.0 Disponível
+                  Atendimento institucional das 8h as 14h
                 </motion.div>
 
                 <motion.h1 
@@ -113,7 +124,7 @@ export default function Landing() {
                   transition={{ delay: 0.3 }}
                   className="text-5xl md:text-6xl font-bold text-gray-900 leading-[1.1] tracking-tight"
                 >
-                  Gestão inteligente para empresas <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">do futuro</span>
+                  Gestão institucional integrada da <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Câmara Municipal de Parauapebas</span>
                 </motion.h1>
 
                 <motion.p 
@@ -122,7 +133,7 @@ export default function Landing() {
                   transition={{ delay: 0.4 }}
                   className="text-xl text-gray-600 max-w-lg leading-relaxed"
                 >
-                  Centralize o controle de acessos, departamentos e visitantes em uma única plataforma segura, intuitiva e compatível com LGPD.
+                  Centralize o controle de acessos, visitantes, setores e rotinas operacionais em uma plataforma segura, moderna e alinhada às necessidades da Câmara Municipal de Parauapebas.
                 </motion.p>
 
                 <motion.div 
@@ -132,10 +143,10 @@ export default function Landing() {
                   className="flex flex-col sm:flex-row gap-4"
                 >
                   <Button size="lg" onClick={() => navigate('/login')} className="bg-indigo-600 hover:bg-indigo-700 h-14 px-8 text-lg shadow-xl shadow-indigo-200 transition-all hover:-translate-y-1">
-                    Criar Conta Grátis <ArrowRight className="ml-2 w-5 h-5" />
+                    Acessar Plataforma <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                   <Button size="lg" variant="outline" className="h-14 px-8 text-lg border-gray-300 hover:bg-gray-50 hover:text-gray-900">
-                    Agendar Demo
+                    Conhecer o acesso
                   </Button>
                 </motion.div>
 
@@ -143,13 +154,16 @@ export default function Landing() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="flex items-center gap-6 text-sm text-gray-500"
+                  className="grid gap-3 text-sm text-gray-500 sm:grid-cols-2"
                 >
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Sem cartão de crédito
+                    <Clock3 className="w-4 h-4 text-green-500" /> Atendimento: 8h as 14h
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> Setup em 2 minutos
+                    <Phone className="w-4 h-4 text-green-500" /> Telefone: 94 98407-6124
+                  </div>
+                  <div className="flex items-center gap-2 sm:col-span-2">
+                    <Mail className="w-4 h-4 text-green-500" /> atendimento@parauapebas.pa.leg.br
                   </div>
                 </motion.div>
               </motion.div>
@@ -171,8 +185,8 @@ export default function Landing() {
                 >
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Visão Geral</h3>
-                      <p className="text-sm text-gray-500">Últimos 30 dias</p>
+                      <h3 className="text-lg font-bold text-gray-900">Painel institucional</h3>
+                      <p className="text-sm text-gray-500">Acompanhamento operacional</p>
                     </div>
                     <Button variant="ghost" size="icon" className="text-gray-400">
                       <BarChart3 className="w-5 h-5" />
@@ -186,11 +200,11 @@ export default function Landing() {
                     </div>
                     <div className="flex gap-4">
                       <div className="flex-1 bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500">Visitantes</p>
+                        <p className="text-xs text-gray-500">Atendimentos</p>
                         <p className="text-xl font-bold text-gray-900">1,284</p>
                       </div>
                       <div className="flex-1 bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500">Check-ins</p>
+                        <p className="text-xs text-gray-500">Acessos liberados</p>
                         <p className="text-xl font-bold text-green-600">+12.5%</p>
                       </div>
                     </div>
@@ -213,8 +227,8 @@ export default function Landing() {
                       <CheckCircle2 className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900">Acesso Permitido</p>
-                      <p className="text-xs text-gray-500">Ricardo Silva acabou de fazer check-in na recepção.</p>
+                      <p className="text-sm font-bold text-gray-900">Entrada registrada</p>
+                      <p className="text-xs text-gray-500">Recepção confirma o acesso de visitante autorizado pela Câmara.</p>
                     </div>
                   </div>
                 </motion.div>
@@ -232,12 +246,12 @@ export default function Landing() {
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <Shield className="w-5 h-5 text-indigo-600" />
-                    <span className="text-sm font-bold text-gray-900">Segurança Ativa</span>
+                    <span className="text-sm font-bold text-gray-900">Monitoramento ativo</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2">
                     <div className="bg-green-500 h-1.5 rounded-full w-full"></div>
                   </div>
-                  <p className="text-xs text-gray-500">Sistema operacional e protegido</p>
+                  <p className="text-xs text-gray-500">Ambiente monitorado para apoio ao controle institucional</p>
                 </motion.div>
 
                 {/* Background Decor Elements */}
@@ -254,9 +268,41 @@ export default function Landing() {
         {/* Features Bento Grid */}
         <section id="features" className="py-24 bg-white">
           <div className="container mx-auto px-6">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Tudo que você precisa em um só lugar</h2>
-              <p className="text-lg text-gray-600">Nossa plataforma foi desenhada para escalar com sua empresa, mantendo a simplicidade e segurança.</p>
+            <div className="mb-16">
+              <a
+                href="https://www.youtube.com/channel/UCQH0_Qeez5wuduF_g5s6xAA"
+                target="_blank"
+                rel="noreferrer"
+                className="group block overflow-hidden rounded-3xl border border-red-100 bg-gradient-to-r from-red-600 via-rose-600 to-red-500 p-8 text-white shadow-2xl shadow-red-100 transition-transform hover:-translate-y-1"
+              >
+                <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                  <div className="max-w-2xl">
+                    <div className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.2em] text-red-100">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+                        <Youtube className="h-5 w-5" />
+                      </div>
+                      <span>Canal oficial</span>
+                    </div>
+                    <h2 className="mt-3 text-3xl md:text-4xl font-bold leading-tight">
+                      Acompanhe as sessoes e transmissoes da Câmara no YouTube
+                    </h2>
+                    <p className="mt-4 text-base md:text-lg text-red-50">
+                      Assista as sessoes ordinarias, solenidades e transmissoes institucionais publicadas no canal oficial da Câmara Municipal de Parauapebas.
+                    </p>
+                    <div className="mt-5 inline-flex flex-wrap items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm text-red-50 backdrop-blur-sm">
+                      <span className="font-semibold text-white">Destaques recentes:</span>
+                      <span>8ª Ordinaria - 07/04/2026</span>
+                      <span className="hidden md:inline text-red-200">|</span>
+                      <span>7ª Ordinaria - 31/03/2026</span>
+                      <span className="hidden md:inline text-red-200">|</span>
+                      <span>6ª Ordinaria - 24/03/2026</span>
+                    </div>
+                  </div>
+                  <div className="inline-flex items-center justify-center rounded-2xl bg-white/15 px-6 py-4 text-lg font-semibold backdrop-blur-sm transition-colors group-hover:bg-white/20">
+                    Acessar canal <ArrowRight className="ml-2 h-5 w-5" />
+                  </div>
+                </div>
+              </a>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -270,9 +316,9 @@ export default function Landing() {
                     <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mb-6 backdrop-blur-sm">
                       <Shield className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">Controle de Acesso (RBAC)</h3>
+                    <h3 className="text-2xl font-bold mb-2">Controle de acesso por perfil</h3>
                     <p className="text-indigo-100 max-w-md">
-                      Defina permissões granulares para Administradores, Colaboradores e Recepcionistas. Garanta que cada usuário tenha acesso apenas ao necessário.
+                      Organize permissões para administradores, colaboradores e recepção, mantendo cada perfil com acesso somente ao que precisa dentro da rotina institucional.
                     </p>
                   </div>
                 </CardContent>
@@ -284,9 +330,9 @@ export default function Landing() {
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
                     <Users className="w-6 h-6 text-purple-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Gestão de Visitantes</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Gestão de visitantes</h3>
                   <p className="text-gray-600 text-sm">
-                    Registro digital rápido, histórico de visitas e notificações automáticas para os responsáveis.
+                    Cadastre visitantes, acompanhe entradas e saídas e mantenha o histórico de atendimento organizado para a operação da Câmara.
                   </p>
                 </CardContent>
               </Card>
@@ -297,9 +343,9 @@ export default function Landing() {
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
                     <Building className="w-6 h-6 text-blue-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Múltiplos Departamentos</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Setores e lotações</h3>
                   <p className="text-gray-600 text-sm">
-                    Organize sua empresa por setores e vincule colaboradores e visitantes automaticamente.
+                    Estruture setores, lotações e responsáveis para apoiar o encaminhamento interno e a administração institucional.
                   </p>
                 </CardContent>
               </Card>
@@ -311,9 +357,9 @@ export default function Landing() {
                     <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mb-6">
                       <Lock className="w-6 h-6 text-emerald-400" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">Conformidade LGPD</h3>
+                    <h3 className="text-2xl font-bold mb-2">Proteção e governança de dados</h3>
                     <p className="text-slate-400 max-w-md">
-                      Seus dados protegidos e anonimizados conforme a Lei Geral de Proteção de Dados.
+                      O sistema apoia boas práticas de proteção de dados, rastreabilidade e segurança para o tratamento das informações institucionais.
                     </p>
                   </div>
                   <div className="hidden md:block">
@@ -325,18 +371,42 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Call to Action */}
+        {/* Institutional Gallery */}
         <section className="py-24 bg-indigo-50">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              Comece a transformar sua gestão hoje.
-            </h2>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-              Junte-se a empresas que já modernizaram seus processos de recepção e segurança.
-            </p>
-            <Button size="lg" onClick={() => navigate('/login')} className="bg-indigo-600 hover:bg-indigo-700 h-16 px-10 text-xl shadow-xl shadow-indigo-200 transition-transform hover:scale-105">
-              Acessar Plataforma
-            </Button>
+          <div className="container mx-auto px-6">
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+                Imagens da Câmara Municipal de Parauapebas
+              </h2>
+              <p className="text-xl text-gray-600">
+                Registros institucionais do plenário e das atividades legislativas publicados nos canais oficiais da Câmara.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {institutionalImages.map((image) => (
+                <Card key={image.src} className="overflow-hidden border-0 bg-white shadow-xl shadow-indigo-100/50">
+                  <div className="relative h-80 overflow-hidden">
+                    <img
+                      src={image.src}
+                      alt={image.title}
+                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/20 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                      <h3 className="text-xl font-bold">{image.title}</h3>
+                      <p className="mt-2 text-sm text-slate-200">{image.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-10 text-center">
+              <Button size="lg" onClick={() => navigate('/login')} className="bg-indigo-600 hover:bg-indigo-700 h-16 px-10 text-xl shadow-xl shadow-indigo-200 transition-transform hover:scale-105">
+                Entrar no sistema
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -344,20 +414,70 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-12">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
+        <div className="container mx-auto px-6 space-y-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-white text-xs font-bold">
+                SC
+              </div>
+              <span className="font-bold text-gray-900">Câmara Municipal de Parauapebas</span>
+            </div>
+            <p className="text-gray-500 text-sm">
+              © 2026 Câmara Municipal de Parauapebas. Todos os direitos reservados.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Card className="border-gray-200 bg-slate-50 shadow-none">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Clock3 className="h-4 w-4 text-indigo-600" />
+                  Horario de atendimento
+                </div>
+                <p className="mt-2 text-sm text-gray-600">Das 8h as 14h</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200 bg-slate-50 shadow-none">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <MapPin className="h-4 w-4 text-indigo-600" />
+                  Endereco
+                </div>
+                <p className="mt-2 text-sm text-gray-600">
+                  Avenida Sonia Cortes, Quadra 33, Lote Especial, Beira Rio II, Parauapebas/PA, CEP 68515-000
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200 bg-slate-50 shadow-none">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Mail className="h-4 w-4 text-indigo-600" />
+                  Canais oficiais
+                </div>
+                <p className="mt-2 text-sm text-gray-600">atendimento@parauapebas.pa.leg.br</p>
+                <p className="mt-1 text-sm text-gray-600">ouvidoria@parauapebas.pa.leg.br</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-gray-200 bg-slate-50 shadow-none">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Phone className="h-4 w-4 text-indigo-600" />
+                  Telefones
+                </div>
+                <p className="mt-2 text-sm text-gray-600">Atendimento: 94 98407-6124</p>
+                <p className="mt-1 text-sm text-gray-600">Ouvidoria: 94 98403-2421</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-t border-gray-200 pt-6 text-sm text-gray-500">
             <div className="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-white text-xs font-bold">
               SC
             </div>
-            <span className="font-bold text-gray-900">Sistema Corporativo</span>
-          </div>
-          <p className="text-gray-500 text-sm">
-            © 2024 Sistema Corporativo. Todos os direitos reservados.
-          </p>
-          <div className="flex gap-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-indigo-600">Termos</a>
-            <a href="#" className="hover:text-indigo-600">Privacidade</a>
-            <a href="#" className="hover:text-indigo-600">Contato</a>
+            <span>Portal institucional e sistema interno alinhados as informacoes oficiais da Câmara Municipal de Parauapebas.</span>
           </div>
         </div>
       </footer>

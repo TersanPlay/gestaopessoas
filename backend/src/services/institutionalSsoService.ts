@@ -30,6 +30,24 @@ interface InstitutionalSsoTokenResponse {
   servidor?: InstitutionalSsoServerPayload;
 }
 
+interface InstitutionalSsoAuthorizationCodeResponse {
+  sucesso?: boolean;
+  mensagem?: string;
+  code?: string;
+  redirect_url?: string;
+}
+
+interface InstitutionalSsoValidationResponse {
+  sucesso?: boolean;
+  mensagem?: string;
+  servidor_encontrado?: boolean;
+  conta_existente?: boolean;
+  servidor_id?: string | null;
+  nome?: string | null;
+  sistema_nome?: string | null;
+  email_cadastrado?: string | null;
+}
+
 interface InstitutionalSsoErrorResponse {
   sucesso?: boolean;
   mensagem?: string;
@@ -38,7 +56,7 @@ interface InstitutionalSsoErrorResponse {
 export interface InstitutionalSsoProfile {
   nome: string;
   matricula: string;
-  cpf: string;
+  cpf: string | null;
   email: string;
   cargo: string | null;
   lotacao: string | null;
@@ -47,6 +65,14 @@ export interface InstitutionalSsoProfile {
   dataAdmissao: Date | null;
   dataDemissao: Date | null;
   cargaHorariaSemanal: number | null;
+}
+
+export interface InstitutionalFirstAccessValidation {
+  servidorId: string;
+  nome: string;
+  sistemaNome: string | null;
+  emailCadastrado: string | null;
+  contaExistente: boolean;
 }
 
 export class InstitutionalSsoError extends Error {
@@ -94,6 +120,13 @@ const getInstitutionalSsoConfig = () => {
   };
 };
 
+const buildInstitutionalSsoHeaders = (apiKey: string) => ({
+  'Content-Type': 'application/json',
+  apikey: apiKey,
+  'X-API-Key': apiKey,
+  Authorization: `Bearer ${apiKey}`,
+});
+
 const buildCallbackUriFromBaseUrl = (baseUrl: string) =>
   `${removeTrailingSlash(baseUrl)}/auth/callback`;
 
@@ -130,10 +163,12 @@ export const resolveInstitutionalSsoRedirectUri = (options?: {
 
 const normalizeInstitutionalSsoProfile = (
   payload: InstitutionalSsoServerPayload,
+  options?: { cpf?: string | null },
 ): InstitutionalSsoProfile => {
   const nome = normalizeOptionalText(payload.nome);
   const matricula = normalizeMatricula(payload.matricula ?? '');
   const email = normalizeOptionalEmail(payload.email);
+  const cpf = normalizeCpf(options?.cpf || '');
 
   if (!nome || !matricula || !email) {
     throw new InstitutionalSsoError(
@@ -153,7 +188,7 @@ const normalizeInstitutionalSsoProfile = (
     nome,
     matricula,
     email,
-    cpf: '',
+    cpf: cpf || null,
     cargo: normalizeOptionalText(payload.cargo),
     lotacao: normalizeOptionalText(payload.lotacao),
     funcao: normalizeOptionalText(payload.funcao),
@@ -202,6 +237,126 @@ const mapAxiosErrorToInstitutionalSsoError = (error: unknown) => {
   );
 };
 
+const requestInstitutionalAuthorizationCode = async (
+  endpoint: string,
+  payload: Record<string, unknown>,
+) => {
+  try {
+    const { apiBaseUrl, clientId, timeoutMs } = getInstitutionalSsoConfig();
+    const response = await axios.post<InstitutionalSsoAuthorizationCodeResponse>(
+      `${apiBaseUrl}${endpoint}`,
+      {
+        ...payload,
+        client_id: clientId,
+      },
+      {
+        headers: buildInstitutionalSsoHeaders(clientId),
+        timeout: timeoutMs,
+      },
+    );
+
+    const code = normalizeOptionalText(response.data?.code);
+
+    if (!response.data?.sucesso || !code) {
+      throw new InstitutionalSsoError(
+        response.data?.mensagem ||
+          'A plataforma SSO não retornou um código de autorização válido.',
+        401,
+      );
+    }
+
+    return code;
+  } catch (error) {
+    throw mapAxiosErrorToInstitutionalSsoError(error);
+  }
+};
+
+export const authenticateInstitutionalSso = async (params: {
+  email: string;
+  senha: string;
+}) => {
+  const code = await requestInstitutionalAuthorizationCode('/sso-login', {
+    email: params.email,
+    senha: params.senha,
+  });
+
+  return exchangeInstitutionalSsoCode(code);
+};
+
+export const validateInstitutionalFirstAccess = async (params: {
+  matricula: string;
+  cpf: string;
+}) => {
+  try {
+    const { apiBaseUrl, clientId, timeoutMs } = getInstitutionalSsoConfig();
+    const response = await axios.post<InstitutionalSsoValidationResponse>(
+      `${apiBaseUrl}/sso-validar`,
+      {
+        matricula: params.matricula,
+        cpf: params.cpf,
+        client_id: clientId,
+      },
+      {
+        headers: buildInstitutionalSsoHeaders(clientId),
+        timeout: timeoutMs,
+      },
+    );
+
+    if (!response.data?.sucesso) {
+      throw new InstitutionalSsoError(
+        response.data?.mensagem || 'Não foi possível validar o primeiro acesso.',
+        401,
+      );
+    }
+
+    if (!response.data.servidor_encontrado) {
+      throw new InstitutionalSsoError(
+        response.data?.mensagem ||
+          'Servidor não encontrado. Verifique matrícula e CPF.',
+        404,
+      );
+    }
+
+    const servidorId = normalizeOptionalText(response.data.servidor_id);
+    const nome = normalizeOptionalText(response.data.nome);
+
+    if (!servidorId || !nome) {
+      throw new InstitutionalSsoError(
+        'A plataforma SSO retornou dados insuficientes para o primeiro acesso.',
+        502,
+      );
+    }
+
+    return {
+      servidorId,
+      nome,
+      sistemaNome: normalizeOptionalText(response.data.sistema_nome),
+      emailCadastrado: normalizeOptionalEmail(response.data.email_cadastrado),
+      contaExistente: Boolean(response.data.conta_existente),
+    } satisfies InstitutionalFirstAccessValidation;
+  } catch (error) {
+    throw mapAxiosErrorToInstitutionalSsoError(error);
+  }
+};
+
+export const registerInstitutionalFirstAccess = async (params: {
+  servidorId: string;
+  matricula: string;
+  cpf: string;
+  email: string;
+  senha: string;
+}) => {
+  const code = await requestInstitutionalAuthorizationCode('/sso-registrar', {
+    servidor_id: params.servidorId,
+    matricula: params.matricula,
+    cpf: params.cpf,
+    email: params.email,
+    senha: params.senha,
+  });
+
+  return exchangeInstitutionalSsoCode(code, { cpf: params.cpf });
+};
+
 export const buildInstitutionalSsoAuthorizationUrl = (options?: {
   requestOrigin?: string | null;
 }) => {
@@ -216,7 +371,10 @@ export const buildInstitutionalSsoAuthorizationUrl = (options?: {
   return `${platformUrl}/sso/validar?${params.toString()}`;
 };
 
-export const exchangeInstitutionalSsoCode = async (code: string) => {
+export const exchangeInstitutionalSsoCode = async (
+  code: string,
+  options?: { cpf?: string | null },
+) => {
   try {
     const normalizedCode = normalizeOptionalText(code);
 
@@ -237,7 +395,7 @@ export const exchangeInstitutionalSsoCode = async (code: string) => {
       },
       {
         headers: {
-          'Content-Type': 'application/json',
+          ...buildInstitutionalSsoHeaders(clientId),
         },
         timeout: timeoutMs,
       },
@@ -253,7 +411,7 @@ export const exchangeInstitutionalSsoCode = async (code: string) => {
 
     return {
       accessToken: response.data.token,
-      profile: normalizeInstitutionalSsoProfile(response.data.servidor),
+      profile: normalizeInstitutionalSsoProfile(response.data.servidor, options),
     };
   } catch (error) {
     throw mapAxiosErrorToInstitutionalSsoError(error);

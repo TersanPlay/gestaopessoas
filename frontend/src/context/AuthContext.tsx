@@ -5,16 +5,20 @@ import api from '../services/api';
 import type {
   AdminLoginCredentials,
   AppUser,
+  FirstAccessCheckCredentials,
   FirstAccessCredentials,
+  FirstAccessProfile,
+  LoginCredentials,
 } from '../types/user';
 
 interface AuthContextData {
   signed: boolean;
   user: AppUser | null;
   loginAdmin: (credentials: AdminLoginCredentials) => Promise<void>;
-  startInstitutionalLogin: () => void;
-  completeInstitutionalLogin: (code: string) => Promise<void>;
-  checkEmailFirstAccess: (email: string) => Promise<void>;
+  loginInstitutional: (credentials: LoginCredentials) => Promise<void>;
+  validateFirstAccess: (
+    credentials: FirstAccessCheckCredentials,
+  ) => Promise<FirstAccessProfile>;
   completeFirstAccess: (credentials: FirstAccessCredentials) => Promise<void>;
   logout: () => void;
   loading: boolean;
@@ -76,23 +80,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     establishSession(response.data as SessionPayload);
   }
 
-  function startInstitutionalLogin() {
-    window.location.assign(`${api.defaults.baseURL}/auth/sso/start`);
-  }
-
-  async function completeInstitutionalLogin(code: string) {
-    const response = await api.post('/auth/sso/exchange', { code });
+  async function loginInstitutional(credentials: LoginCredentials) {
+    const response = await api.post('/auth/login', credentials);
     establishSession(response.data as SessionPayload);
   }
 
-  async function checkEmailFirstAccess(email: string) {
-    await api.post('/auth/first-access/check-email', { email });
+  async function validateFirstAccess(credentials: FirstAccessCheckCredentials) {
+    const response = await api.post('/auth/first-access/check', credentials);
+    return response.data.profile as FirstAccessProfile;
   }
 
   async function completeFirstAccess(credentials: FirstAccessCredentials) {
     const response = await api.post('/auth/first-access/complete', credentials);
-    const { user: authenticatedUser, token } = response.data as SessionPayload;
-    establishSession({ user: authenticatedUser, token });
+    establishSession(response.data as SessionPayload);
   }
 
   function logout() {
@@ -109,9 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signed: !!user,
         user,
         loginAdmin,
-        startInstitutionalLogin,
-        completeInstitutionalLogin,
-        checkEmailFirstAccess,
+        loginInstitutional,
+        validateFirstAccess,
         completeFirstAccess,
         logout,
         loading,

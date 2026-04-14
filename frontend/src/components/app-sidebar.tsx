@@ -25,59 +25,76 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/context/AuthContext"
 
+type MenuItem = {
+  title: string
+  url: string
+  icon: React.ComponentType<{ className?: string }>
+  hoverIconClass: string
+}
+
 // Menu items configuration
 const MENU_ITEMS = [
   {
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+    hoverIconClass: "group-hover/menu-item:text-sky-500",
   },
   {
     title: "Guarita",
     url: "/guardhouse/dashboard",
     icon: Shield,
+    hoverIconClass: "group-hover/menu-item:text-emerald-500",
   },
   {
     title: "Relatórios",
     url: "/reports",
     icon: FileBarChart,
+    hoverIconClass: "group-hover/menu-item:text-violet-500",
   },
   {
     title: "Visitas",
     url: "/visits",
     icon: ClipboardList,
+    hoverIconClass: "group-hover/menu-item:text-amber-500",
   },
   {
     title: "Nova Visita",
     url: "/visits/new",
     icon: PlusCircle,
+    hoverIconClass: "group-hover/menu-item:text-rose-500",
   },
   {
     title: "Visitantes",
     url: "/visitors",
     icon: User2,
+    hoverIconClass: "group-hover/menu-item:text-cyan-500",
   },
   {
     title: "Departamentos",
     url: "/departments",
     icon: Inbox,
+    hoverIconClass: "group-hover/menu-item:text-orange-500",
   },
   {
     title: "Agenda",
     url: "/calendar",
     icon: Calendar,
+    hoverIconClass: "group-hover/menu-item:text-lime-500",
   },
   {
     title: "Totem",
     url: "/totem",
     icon: Monitor,
+    hoverIconClass: "group-hover/menu-item:text-fuchsia-500",
   },
   {
     title: "Configurações",
     url: "/settings",
     icon: Settings,
+    hoverIconClass: "group-hover/menu-item:text-slate-500",
   },
-]
+] satisfies MenuItem[]
 
 export function AppSidebar() {
   const { user, logout } = useAuth()
@@ -99,7 +116,7 @@ export function AppSidebar() {
 
   const filteredItems = useMemo(() => {
     // Clone items
-    let items = [...MENU_ITEMS]
+    let items: MenuItem[] = [...MENU_ITEMS]
     
     // Show "Nova Visita" only for roles allowed to create visits
     const canCreateVisit = ['ADMIN', 'RECEPCIONISTA', 'COLABORADOR'].includes(user?.role ?? '')
@@ -113,6 +130,7 @@ export function AppSidebar() {
         title: "Usuários",
         url: "/users",
         icon: UsersIcon,
+        hoverIconClass: "group-hover/menu-item:text-indigo-500",
       })
     }
     
@@ -159,9 +177,10 @@ export function AppSidebar() {
                     asChild 
                     isActive={isRouteActive(item.url)}
                     tooltip={item.title}
+                    className="group/menu-item"
                   >
                     <Link to={item.url}>
-                      <item.icon />
+                      <item.icon className={`transition-colors duration-200 ${item.hoverIconClass}`} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>

@@ -21,11 +21,13 @@ type LoginRouteState = {
 } | null;
 
 export default function Login() {
-  const { loginAdmin, startInstitutionalLogin } = useAuth();
+  const { loginAdmin, loginInstitutional } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const routeState = location.state as LoginRouteState;
   const [mode, setMode] = useState<LoginMode>('colaborador');
+  const [collaboratorEmail, setCollaboratorEmail] = useState('');
+  const [collaboratorPassword, setCollaboratorPassword] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,10 +42,31 @@ export default function Login() {
     resetFeedback();
   };
 
-  const handleCollaboratorLogin = () => {
+  const handleCollaboratorLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     resetFeedback();
-    startInstitutionalLogin();
+
+    try {
+      await loginInstitutional({
+        email: collaboratorEmail.trim().toLowerCase(),
+        password: collaboratorPassword,
+      });
+      navigate('/dashboard');
+    } catch (loginError) {
+      console.error(loginError);
+
+      if (isAxiosError<{ message?: string }>(loginError)) {
+        setError(
+          loginError.response?.data?.message ||
+            'Falha no login institucional. Confira e-mail e senha.',
+        );
+      } else {
+        setError('Falha no login institucional. Confira e-mail e senha.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
@@ -109,12 +132,12 @@ export default function Login() {
           </div>
 
           {mode === 'colaborador' ? (
-            <div className="space-y-4">
+            <form onSubmit={handleCollaboratorLogin} className="space-y-4">
               <div className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
                 <p className="font-medium text-slate-900">Acesso institucional via SSO</p>
                 <p>
-                  O login do colaborador agora acontece no portal institucional da Câmara Municipal.
-                  A validação, o primeiro acesso e a autenticação ficam centralizados no IdP.
+                  O login do colaborador acontece nesta tela, com validação direta na API institucional.
+                  Não há redirecionamento para uma página externa.
                 </p>
               </div>
               <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-foreground">
@@ -123,20 +146,57 @@ export default function Login() {
                   Entrar com Câmara Municipal
                 </div>
                 <p className="mt-2 text-muted-foreground">
-                  Você será redirecionado para o login institucional e voltará automaticamente ao sistema após a autenticação.
+                  Use seu e-mail institucional e a senha do SSO para acessar diretamente o sistema.
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="collaborator-email">E-mail institucional</Label>
+                <Input
+                  id="collaborator-email"
+                  type="email"
+                  value={collaboratorEmail}
+                  onChange={(e) => setCollaboratorEmail(e.target.value)}
+                  placeholder="usuario@parauapebas.pa.leg.br"
+                  autoComplete="username"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="collaborator-password">Senha institucional</Label>
+                <Input
+                  id="collaborator-password"
+                  type="password"
+                  value={collaboratorPassword}
+                  onChange={(e) => setCollaboratorPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
               </div>
               {error && <p className="text-center text-sm text-red-500">{error}</p>}
               <Button
-                type="button"
-                onClick={handleCollaboratorLogin}
+                type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={loading}
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
                 Entrar com Câmara Municipal
               </Button>
-            </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() =>
+                  navigate('/first-access', {
+                    state: {
+                      email: collaboratorEmail.trim().toLowerCase(),
+                    },
+                  })
+                }
+                disabled={loading}
+              >
+                Primeiro acesso
+              </Button>
+            </form>
           ) : (
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <div className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
@@ -176,7 +236,7 @@ export default function Login() {
         </CardContent>
         <CardFooter className="flex flex-col gap-2 text-center text-xs text-slate-500">
           {mode === 'colaborador' ? (
-            <span>Primeiro acesso, login e recuperação de identidade do colaborador agora são tratados pelo SSO institucional.</span>
+            <span>Login e primeiro acesso do colaborador usam chamadas diretas à API institucional dentro desta interface.</span>
           ) : (
             <span>O admin local padrão do seed continua vinculado ao e-mail configurado no ambiente.</span>
           )}

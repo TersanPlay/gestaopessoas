@@ -5,13 +5,13 @@ import type { User } from '@prisma/client';
 import type { AuthRequest } from '../middlewares/authMiddleware.js';
 import { userRepository } from '../repositories/userRepository.js';
 import {
-  ExternalServerAuthError,
-  authenticateExternalServer,
-} from '../services/externalServerAuthService.js';
-import {
   InstitutionalSsoError,
+  authenticateInstitutionalSso,
   buildInstitutionalSsoAuthorizationUrl,
   exchangeInstitutionalSsoCode,
+  registerInstitutionalFirstAccess,
+  type InstitutionalSsoProfile,
+  validateInstitutionalFirstAccess,
 } from '../services/institutionalSsoService.js';
 import { signToken } from '../utils/jwt.js';
 import {
@@ -19,7 +19,6 @@ import {
   normalizeMatricula,
   normalizeOptionalEmail,
   normalizeRequiredText,
-  toExternalUserFields,
   toUserResponse,
 } from '../utils/userProfile.js';
 
@@ -58,30 +57,6 @@ const buildSessionResponse = (user: AuthUserPayload) => ({
   user: buildAuthPayload(user),
   token: buildToken(user),
 });
-
-const buildExternalProfilePayload = (
-  profile: Awaited<ReturnType<typeof authenticateExternalServer>>,
-) => ({
-  matricula: profile.matricula,
-  cpf: profile.cpf,
-  name: profile.nome,
-  cargo: profile.cargo,
-  lotacao: profile.lotacao,
-  funcao: profile.funcao,
-  vinculo: profile.vinculo,
-  dataAdmissao: profile.dataAdmissao,
-  dataDemissao: profile.dataDemissao,
-  cargaHorariaSemanal: profile.cargaHorariaSemanal,
-});
-
-const respondExternalAuthError = (res: Response, error: unknown) => {
-  if (error instanceof ExternalServerAuthError) {
-    const statusCode = error.statusCode === 404 ? 401 : error.statusCode;
-    return res.status(statusCode).json({ message: error.message });
-  }
-
-  return res.status(500).json({ message: 'Internal server error' });
-};
 
 const respondInstitutionalSsoError = (res: Response, error: unknown) => {
   if (error instanceof InstitutionalSsoError) {
@@ -144,6 +119,74 @@ const resolveRequestOrigin = (req: AuthRequest) => {
   return `${req.protocol}://${host}`;
 };
 
+const buildInstitutionalUserFields = (profile: InstitutionalSsoProfile) => ({
+  name: profile.nome,
+  email: profile.email,
+  matricula: profile.matricula,
+  cargo: profile.cargo,
+  lotacao: profile.lotacao,
+  funcao: profile.funcao,
+  vinculo: profile.vinculo,
+  dataAdmissao: profile.dataAdmissao,
+  dataDemissao: profile.dataDemissao,
+  cargaHorariaSemanal: profile.cargaHorariaSemanal,
+  authProvider: 'EXTERNAL' as const,
+  ...(profile.cpf ? { cpf: profile.cpf } : {}),
+});
+
+const provisionInstitutionalSession = async (params: {
+  accessToken: string;
+  profile: InstitutionalSsoProfile;
+}) => {
+  const matchedUsers = await resolveInstitutionalUserCandidates({
+    email: params.profile.email,
+    matricula: params.profile.matricula,
+    cpf: params.profile.cpf,
+  });
+
+  if (matchedUsers.length > 1) {
+    return {
+      status: 409 as const,
+      payload: {
+        message:
+          'Há conflito entre os dados institucionais recebidos e cadastros locais existentes. Contate o administrador do sistema.',
+      },
+    };
+  }
+
+  const matchedUser = matchedUsers[0];
+
+  if (matchedUser?.role === 'ADMIN') {
+    return {
+      status: 409 as const,
+      payload: {
+        message:
+          'O e-mail institucional informado está vinculado a um administrador local e não pode ser sobrescrito pelo SSO.',
+      },
+    };
+  }
+
+  const authenticatedUser = matchedUser
+    ? await userRepository.update(
+        matchedUser.id,
+        buildInstitutionalUserFields(params.profile),
+      )
+    : await userRepository.create({
+        ...buildInstitutionalUserFields(params.profile),
+        password: await bcrypt.hash(randomBytes(32).toString('hex'), 10),
+        role: 'COLABORADOR',
+      });
+
+  return {
+    status: 200 as const,
+    payload: {
+      ...buildSessionResponse(authenticatedUser),
+      institutionalAccessToken: params.accessToken,
+      provisioned: !matchedUser,
+    },
+  };
+};
+
 export const startInstitutionalSso = async (req: AuthRequest, res: Response) => {
   try {
     return res.redirect(
@@ -172,57 +215,8 @@ export const exchangeInstitutionalSso = async (
     }
 
     const { accessToken, profile } = await exchangeInstitutionalSsoCode(code);
-    const matchedUsers = await resolveInstitutionalUserCandidates({
-      email: profile.email,
-      matricula: profile.matricula,
-      cpf: profile.cpf,
-    });
-
-    if (matchedUsers.length > 1) {
-      return res.status(409).json({
-        message:
-          'Há conflito entre os dados institucionais recebidos e cadastros locais existentes. Contate o administrador do sistema.',
-      });
-    }
-
-    const matchedUser = matchedUsers[0];
-
-    if (matchedUser?.role === 'ADMIN') {
-      return res.status(409).json({
-        message:
-          'O e-mail institucional informado está vinculado a um administrador local e não pode ser sobrescrito pelo SSO.',
-      });
-    }
-
-    const normalizedFields = {
-      name: profile.nome,
-      email: profile.email,
-      matricula: profile.matricula,
-      cargo: profile.cargo,
-      lotacao: profile.lotacao,
-      funcao: profile.funcao,
-      vinculo: profile.vinculo,
-      dataAdmissao: profile.dataAdmissao,
-      dataDemissao: profile.dataDemissao,
-      cargaHorariaSemanal: profile.cargaHorariaSemanal,
-      authProvider: 'EXTERNAL' as const,
-    };
-
-    const authenticatedUser = matchedUser
-      ? await userRepository.update(matchedUser.id, {
-          ...normalizedFields,
-        })
-      : await userRepository.create({
-          ...normalizedFields,
-          password: await bcrypt.hash(randomBytes(32).toString('hex'), 10),
-          role: 'COLABORADOR',
-        });
-
-    return res.json({
-      ...buildSessionResponse(authenticatedUser),
-      institutionalAccessToken: accessToken,
-      provisioned: !matchedUser,
-    });
+    const session = await provisionInstitutionalSession({ accessToken, profile });
+    return res.status(session.status).json(session.payload);
   } catch (error) {
     console.error(error);
     return respondInstitutionalSsoError(res, error);
@@ -292,51 +286,21 @@ export const login = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const existingUser = await userRepository.findByEmail(email);
-
-    if (!existingUser) {
-      return res.status(403).json({
-        code: 'FIRST_ACCESS_REQUIRED',
-        message: 'Primeiro acesso necessário ou credenciais inválidas. Configure sua senha antes de entrar.',
+    if (!email.endsWith('@parauapebas.pa.leg.br')) {
+      return res.status(400).json({
+        message: 'Use seu e-mail institucional no domínio @parauapebas.pa.leg.br.',
       });
     }
 
-    const isMatch = await bcrypt.compare(password, existingUser.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciais inválidas.' });
-    }
-
-    let authenticatedUser: AuthUserPayload = existingUser;
-
-    if (
-      existingUser.authProvider === 'EXTERNAL' &&
-      existingUser.role !== 'ADMIN'
-    ) {
-      try {
-        const externalProfile = await authenticateExternalServer({
-          matricula: existingUser.matricula || '',
-          cpf: existingUser.cpf || '',
-          rawCpf: existingUser.cpf || '',
-        });
-        authenticatedUser = await userRepository.update(existingUser.id, {
-          ...toExternalUserFields(externalProfile),
-        });
-      } catch (syncError) {
-        console.warn(
-          `External sync skipped for user ${existingUser.id}:`,
-          syncError,
-        );
-      }
-    }
-
-    res.json({
-      user: buildAuthPayload(authenticatedUser),
-      token: buildToken(authenticatedUser),
-      provisioned: false,
+    const { accessToken, profile } = await authenticateInstitutionalSso({
+      email,
+      senha: password,
     });
+    const session = await provisionInstitutionalSession({ accessToken, profile });
+    return res.status(session.status).json(session.payload);
   } catch (error) {
     console.error(error);
-    respondExternalAuthError(res, error);
+    respondInstitutionalSsoError(res, error);
   }
 };
 
@@ -389,28 +353,42 @@ export const checkFirstAccess = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const existingUser = await userRepository.findByMatriculaAndCpf(matricula, cpf);
+    const validation = await validateInstitutionalFirstAccess({
+      matricula,
+      cpf,
+    });
 
-    if (existingUser) {
+    if (validation.contaExistente) {
       return res.status(409).json({
         code: 'ACCOUNT_ALREADY_EXISTS',
-        message: 'Este usuário já possui acesso local. Faça login com sua senha.',
+        emailCadastrado: validation.emailCadastrado,
+        message: validation.emailCadastrado
+          ? `Você já possui cadastro com o e-mail ${validation.emailCadastrado}. Faça login para continuar.`
+          : 'Você já possui cadastro institucional. Faça login para continuar.',
       });
     }
 
-    const externalProfile = await authenticateExternalServer({
-      matricula,
-      cpf,
-      rawCpf,
-    });
-
     return res.json({
       firstAccessRequired: true,
-      profile: buildExternalProfilePayload(externalProfile),
+      profile: {
+        servidorId: validation.servidorId,
+        matricula,
+        cpf,
+        name: validation.nome,
+        systemName: validation.sistemaNome,
+        emailCadastrado: validation.emailCadastrado,
+        cargo: null,
+        lotacao: null,
+        funcao: null,
+        vinculo: null,
+        dataAdmissao: null,
+        dataDemissao: null,
+        cargaHorariaSemanal: null,
+      },
     });
   } catch (error) {
     console.error(error);
-    respondExternalAuthError(res, error);
+    respondInstitutionalSsoError(res, error);
   }
 };
 
@@ -446,15 +424,17 @@ export const checkEmailFirstAccess = async (req: AuthRequest, res: Response) => 
 
 export const completeFirstAccess = async (req: AuthRequest, res: Response) => {
   try {
+    const servidorId = normalizeRequiredText(req.body.servidorId);
     const matricula = normalizeMatricula(String(req.body.matricula || ''));
     const rawCpf = String(req.body.cpf || '');
     const cpf = normalizeCpf(rawCpf);
     const email = normalizeOptionalEmail(req.body.email);
     const password = normalizeRequiredText(req.body.password);
 
-    if (!matricula || !cpf || !email || !password) {
+    if (!servidorId || !matricula || !cpf || !email || !password) {
       return res.status(400).json({
-        message: 'Matrícula, CPF, e-mail institucional e senha são obrigatórios.',
+        message:
+          'Servidor, matrícula, CPF, e-mail institucional e senha são obrigatórios.',
       });
     }
 
@@ -471,48 +451,17 @@ export const completeFirstAccess = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const existingUser = await userRepository.findByMatriculaAndCpf(matricula, cpf);
-
-    if (existingUser) {
-      return res.status(409).json({
-        code: 'ACCOUNT_ALREADY_EXISTS',
-        message: 'Este usuário já possui acesso local. Faça login com sua senha.',
-      });
-    }
-
-    const conflictingEmail = await userRepository.findConflictingUser({
-      email,
-    });
-
-    if (conflictingEmail) {
-      return res.status(409).json({
-        code: 'EMAIL_ALREADY_IN_USE',
-        message: 'Este e-mail já está em uso. Informe seu e-mail institucional correto.',
-      });
-    }
-
-    const externalProfile = await authenticateExternalServer({
+    const { accessToken, profile } = await registerInstitutionalFirstAccess({
+      servidorId,
       matricula,
       cpf,
-      rawCpf,
-    });
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const provisionedUser = await userRepository.create({
-      ...toExternalUserFields(externalProfile),
-      password: hashedPassword,
       email,
-      authProvider: 'EXTERNAL',
-      role: 'COLABORADOR',
+      senha: password,
     });
-
-    return res.status(201).json({
-      user: buildAuthPayload(provisionedUser),
-      token: buildToken(provisionedUser),
-      provisioned: true,
-    });
+    const session = await provisionInstitutionalSession({ accessToken, profile });
+    return res.status(session.status === 200 ? 201 : session.status).json(session.payload);
   } catch (error) {
     console.error(error);
-    respondExternalAuthError(res, error);
+    respondInstitutionalSsoError(res, error);
   }
 };

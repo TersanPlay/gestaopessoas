@@ -80,7 +80,9 @@ export const fetchRemoteDepartmentCatalog = async () => {
       `${apiBaseUrl}/listar-lotacoes`,
       {
         headers: {
+          apikey: apiKey,
           'X-API-Key': apiKey,
+          Authorization: `Bearer ${apiKey}`,
         },
         timeout: timeoutMs,
       },

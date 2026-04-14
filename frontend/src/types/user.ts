@@ -37,7 +37,13 @@ export interface AdminLoginCredentials {
   password: string;
 }
 
+export interface FirstAccessCheckCredentials {
+  matricula: string;
+  cpf: string;
+}
+
 export interface FirstAccessCredentials {
+  servidorId: string;
   matricula: string;
   cpf: string;
   email: string;
@@ -45,9 +51,12 @@ export interface FirstAccessCredentials {
 }
 
 export interface FirstAccessProfile {
+  servidorId: string;
   matricula: string;
   cpf: string;
   name: string;
+  systemName: string | null;
+  emailCadastrado: string | null;
   cargo: string | null;
   lotacao: string | null;
   funcao: string | null;
