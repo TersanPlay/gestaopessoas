@@ -87,7 +87,7 @@ const isCompletedStatus = (status: VisitStatus) => status === 'CHECKIN' || statu
 
 const statusLabel = (status: VisitStatus) => {
   if (status === 'CHECKIN') return 'Em andamento';
-  if (status === 'CHECKOUT') return 'ConcluÃ­da';
+  if (status === 'CHECKOUT') return 'Concluida';
   if (status === 'PENDING') return 'Pendente';
   return 'Cancelada';
 };
@@ -139,8 +139,8 @@ export default function Reports() {
       setReportData(visitsData);
       setCurrentPage(1);
     } catch (error) {
-      console.error("Erro ao gerar relatÃ³rio", error);
-      alert("Erro ao gerar relatÃ³rio");
+      console.error("Erro ao gerar relatorio", error);
+      alert("Erro ao gerar relatorio");
     } finally {
       setLoading(false);
     }
@@ -411,10 +411,10 @@ export default function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gradient flex items-center gap-2">
-            <FileBarChart className="h-8 w-8" /> Dashboard AnalÃ­tico de Visitas
+            <FileBarChart className="h-8 w-8" /> Dashboard Analitico de Visitas
           </h1>
           <p className="text-muted-foreground mt-1">
-            Painel consolidado com indicadores, grÃ¡ficos e tabelas para anÃ¡lise do fluxo institucional.
+            Painel consolidado com indicadores, graficos e tabelas para analise do fluxo institucional.
           </p>
         </div>
       </div>
@@ -422,12 +422,12 @@ export default function Reports() {
       <Card className="sticky top-2 z-30 border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-5 w-5" /> Filtros e SegmentaÃ§Ã£o
+            <Filter className="h-5 w-5" /> Filtros e Segmentacao
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4 items-end">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">PerÃ­odo</label>
+            <label className="text-sm font-medium">Periodo</label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -488,14 +488,14 @@ export default function Reports() {
                 <SelectItem value="ALL">Todos</SelectItem>
                 <SelectItem value="PENDING">Pendente</SelectItem>
                 <SelectItem value="CHECKIN">Em andamento</SelectItem>
-                <SelectItem value="CHECKOUT">ConcluÃ­da</SelectItem>
+                <SelectItem value="CHECKOUT">Concluida</SelectItem>
                 <SelectItem value="CANCELLED">Cancelada</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <Button onClick={handleGenerateReport} disabled={loading} className="w-full">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Atualizar anÃ¡lise"}
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Atualizar analise"}
           </Button>
         </CardContent>
       </Card>
@@ -577,11 +577,11 @@ export default function Reports() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Visitas por perÃ­odo</CardTitle>
+            <CardTitle>Visitas por periodo</CardTitle>
             <div className="flex items-center gap-1 rounded-md border p-1">
               <Button type="button" size="sm" variant={groupMode === 'day' ? 'default' : 'ghost'} onClick={() => setGroupMode('day')}>Dia</Button>
               <Button type="button" size="sm" variant={groupMode === 'week' ? 'default' : 'ghost'} onClick={() => setGroupMode('week')}>Semana</Button>
-              <Button type="button" size="sm" variant={groupMode === 'month' ? 'default' : 'ghost'} onClick={() => setGroupMode('month')}>MÃªs</Button>
+              <Button type="button" size="sm" variant={groupMode === 'month' ? 'default' : 'ghost'} onClick={() => setGroupMode('month')}>Mes</Button>
             </div>
           </CardHeader>
           <CardContent className="h-[320px]">
@@ -593,7 +593,7 @@ export default function Reports() {
                 <Tooltip />
                 <Legend />
                 <Area type="monotone" dataKey="total" name="Total" stroke="#2563eb" fill="#93c5fd" fillOpacity={0.35} />
-                <Area type="monotone" dataKey="completed" name="ConcluÃ­das" stroke="#16a34a" fill="#86efac" fillOpacity={0.25} />
+                <Area type="monotone" dataKey="completed" name="Concluidas" stroke="#16a34a" fill="#86efac" fillOpacity={0.25} />
                 <Area type="monotone" dataKey="cancelled" name="Canceladas" stroke="#dc2626" fill="#fecaca" fillOpacity={0.25} />
               </AreaChart>
             </ResponsiveContainer>
@@ -602,7 +602,7 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>EvoluÃ§Ã£o temporal (dia a dia)</CardTitle>
+            <CardTitle>Evolucao temporal (dia a dia)</CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -640,7 +640,7 @@ export default function Reports() {
 
         <Card>
           <CardHeader>
-            <CardTitle>HorÃ¡rios de maior fluxo (semana)</CardTitle>
+            <CardTitle>Horarios de maior fluxo (semana)</CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -658,7 +658,7 @@ export default function Reports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Heatmap de fluxo por dia e horÃ¡rio</CardTitle>
+          <CardTitle>Heatmap de fluxo por dia e horario</CardTitle>
         </CardHeader>
         <CardContent className="overflow-auto">
           <div className="min-w-[900px] space-y-2">
@@ -694,7 +694,7 @@ export default function Reports() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>RelatÃ³rio consolidado por departamento</CardTitle>
+            <CardTitle>Relatorio consolidado por departamento</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -702,9 +702,9 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>Departamento</TableHead>
                   <TableHead className="text-right">Visitas</TableHead>
-                  <TableHead className="text-right">ConcluÃ­das</TableHead>
+                  <TableHead className="text-right">Concluidas</TableHead>
                   <TableHead className="text-right">Canceladas</TableHead>
-                  <TableHead className="text-right">ParticipaÃ§Ã£o</TableHead>
+                  <TableHead className="text-right">Participacao</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -749,7 +749,7 @@ export default function Reports() {
                 <TableRow>
                   <TableHead>Dia</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">ConcluÃ­das</TableHead>
+                  <TableHead className="text-right">Concluidas</TableHead>
                   <TableHead className="text-right">Canceladas</TableHead>
                 </TableRow>
               </TableHeader>
@@ -811,7 +811,7 @@ export default function Reports() {
 
             <div className="flex items-center justify-between space-x-2 py-4">
               <div className="text-sm text-muted-foreground">
-                PÃ¡gina {currentPage} de {totalPages}
+                Pagina {currentPage} de {totalPages}
               </div>
               <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
@@ -819,7 +819,7 @@ export default function Reports() {
                   Anterior
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
-                  PrÃ³ximo
+                  Proximo
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -837,7 +837,7 @@ export default function Reports() {
       )}
 
       <div className="text-xs text-muted-foreground">
-        Indicadores principais: pendentes {pendingVisits} â€¢ concluÃ­das {completedVisits} â€¢ canceladas {cancelledVisits}.
+        Indicadores principais: pendentes {pendingVisits} | concluidas {completedVisits} | canceladas {cancelledVisits}.
       </div>
     </div>
   );

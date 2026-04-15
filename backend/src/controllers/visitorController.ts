@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 import prisma from '../utils/prisma.js';
 import { AuthRequest } from '../middlewares/authMiddleware.js';
@@ -82,9 +83,22 @@ export const updateVisitor = async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const { name, document, phone, photo, faceEmbedding } = req.body;
 
+        const data: {
+          name?: string;
+          document?: string;
+          phone?: string | null;
+          photo?: string | null;
+          faceEmbedding?: Prisma.InputJsonValue;
+        } = { name, document, phone, photo };
+
+        // Preserve the current embedding when the client edits only textual data.
+        if (faceEmbedding !== undefined && faceEmbedding !== null) {
+            data.faceEmbedding = faceEmbedding;
+        }
+
         const visitor = await prisma.visitor.update({
             where: { id: id as string },
-            data: { name, document, phone, photo, faceEmbedding }
+            data
         });
         res.json(visitor);
     } catch (error) {

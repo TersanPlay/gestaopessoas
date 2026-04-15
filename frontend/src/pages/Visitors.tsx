@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, User, Phone, FileText, Search, Download, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, Phone, Plus, Search, User } from 'lucide-react';
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { maskDocument } from "@/lib/formatters";
 import { toCsv } from "@/lib/csv";
@@ -23,6 +23,7 @@ interface Visitor {
   document: string;
   phone?: string;
   photo?: string;
+  faceEmbedding?: number[] | null;
   consentGiven?: boolean;
 }
 
@@ -181,6 +182,17 @@ const Visitors = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-4 space-y-3 text-sm flex-1">
+                {Boolean(v.photo) && Array.isArray(v.faceEmbedding) && v.faceEmbedding.length > 0 ? (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Facial valido
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Precisa recadastro
+                  </div>
+                )}
                 <div className="flex items-center gap-2 font-semibold text-foreground">
                   <User className="h-4 w-4 text-primary" />
                   <span className="truncate">{v.name}</span>

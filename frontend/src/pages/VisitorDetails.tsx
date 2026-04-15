@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, User, Phone, FileText, Pencil, Clock, Eye } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Clock, Eye, FileText, Pencil, Phone, ScanFace, User } from "lucide-react";
 import { VisitorFormDialog } from "@/components/VisitorFormDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { maskDocument } from "@/lib/formatters";
@@ -26,6 +27,7 @@ interface VisitorDetails {
   document: string;
   phone?: string;
   photo?: string;
+  faceEmbedding?: number[] | null;
   consentGiven?: boolean;
   visits: VisitHistory[];
 }
@@ -36,6 +38,7 @@ const VisitorDetails = () => {
   const [visitor, setVisitor] = useState<VisitorDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [showPhotoAction, setShowPhotoAction] = useState(false);
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
 
@@ -84,6 +87,11 @@ const VisitorDetails = () => {
   if (!visitor) {
     return <div className="p-8 text-center">Visitante não encontrado.</div>;
   }
+
+  const hasValidFaceRecognition =
+    Boolean(visitor.photo) &&
+    Array.isArray(visitor.faceEmbedding) &&
+    visitor.faceEmbedding.length > 0;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
@@ -149,9 +157,46 @@ const VisitorDetails = () => {
                 </div>
             </div>
 
+            <Alert
+              className={
+                hasValidFaceRecognition
+                  ? "border-green-200 bg-green-50 text-green-800"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
+              }
+            >
+              {hasValidFaceRecognition ? (
+                <CheckCircle2 className="h-4 w-4 text-green-700" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 text-amber-700" />
+              )}
+              <AlertDescription>
+                <strong>
+                  {hasValidFaceRecognition
+                    ? 'Foto facial valida para reconhecimento'
+                    : 'Foto facial precisa de recadastro'}
+                </strong>
+                <br />
+                {hasValidFaceRecognition
+                  ? 'Este visitante esta apto para reconhecimento facial no totem.'
+                  : 'Capture uma nova foto para gerar o reconhecimento facial e habilitar o uso no totem.'}
+              </AlertDescription>
+            </Alert>
+
+            <Alert className="border-sky-200 bg-sky-50 text-sky-800">
+              <ScanFace className="h-4 w-4 text-sky-700" />
+              <AlertDescription>
+                Use <strong>Recadastrar Foto Facial</strong> para atualizar a imagem usada no reconhecimento do totem.
+              </AlertDescription>
+            </Alert>
+
             <Button className="w-full mt-4" variant="outline" onClick={() => setIsEditDialogOpen(true)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 Editar Dados
+            </Button>
+
+            <Button className="w-full" onClick={() => setIsPhotoDialogOpen(true)}>
+                <Camera className="h-4 w-4 mr-2" />
+                Recadastrar Foto Facial
             </Button>
           </CardContent>
         </Card>
@@ -228,6 +273,14 @@ const VisitorDetails = () => {
         onOpenChange={setIsEditDialogOpen}
         visitorToEdit={visitor}
         onSuccess={handleEditSuccess}
+      />
+
+      <VisitorFormDialog 
+        open={isPhotoDialogOpen}
+        onOpenChange={setIsPhotoDialogOpen}
+        visitorToEdit={visitor}
+        onSuccess={handleEditSuccess}
+        photoOnly
       />
 
       <Dialog open={isPhotoViewerOpen} onOpenChange={setIsPhotoViewerOpen}>

@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Camera, Pencil } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, Camera, CheckCircle2, Loader2, Pencil } from 'lucide-react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import api from '../services/api';
@@ -24,6 +25,7 @@ interface Visitor {
   phone?: string;
   photo?: string;
   consentGiven?: boolean;
+  faceEmbedding?: number[] | null;
 }
 
 interface VisitorFormDialogProps {
@@ -31,6 +33,7 @@ interface VisitorFormDialogProps {
   onOpenChange: (open: boolean) => void;
   visitorToEdit?: Partial<Visitor>;
   onSuccess?: (visitor: Visitor) => void;
+  photoOnly?: boolean;
 }
 
 type FaceApiModule = typeof import('face-api.js');
@@ -41,13 +44,17 @@ export function VisitorFormDialog({
   open, 
   onOpenChange, 
   visitorToEdit = DEFAULT_VISITOR, 
-  onSuccess 
+  onSuccess,
+  photoOnly = false,
 }: VisitorFormDialogProps) {
   const [formData, setFormData] = useState<Partial<Visitor>>({});
   const [saving, setSaving] = useState(false);
   const [consent, setConsent] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [faceEmbedding, setFaceEmbedding] = useState<number[] | null>(null);
+  const [embeddingStatus, setEmbeddingStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [embeddingFeedback, setEmbeddingFeedback] = useState<string | null>(null);
+  const [photoChanged, setPhotoChanged] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const faceapiRef = useRef<FaceApiModule | null>(null);
@@ -58,6 +65,9 @@ export function VisitorFormDialog({
       setFormData(visitorToEdit);
       setConsent(!!visitorToEdit.consentGiven);
       setFaceEmbedding(null);
+      setEmbeddingStatus('idle');
+      setEmbeddingFeedback(null);
+      setPhotoChanged(false);
     }
     return () => stopCamera();
   }, [open, visitorToEdit]);
@@ -130,24 +140,45 @@ export function VisitorFormDialog({
     if (!ctx) return;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg');
+    setPhotoChanged(true);
     setFormData((prev) => ({ ...prev, photo: dataUrl }));
-    generateEmbedding(dataUrl);
+    void generateEmbedding(dataUrl);
     stopCamera();
   };
 
   const generateEmbedding = async (dataUrl: string) => {
+    setEmbeddingStatus('processing');
+    setEmbeddingFeedback('Analisando a foto para gerar o reconhecimento facial...');
+
     try {
-      if (!modelsReady || !faceapiRef.current) return;
+      if (!modelsReady || !faceapiRef.current) {
+        setFaceEmbedding(null);
+        setEmbeddingStatus('error');
+        setEmbeddingFeedback('Os modelos faciais ainda estão carregando. Aguarde um instante e tente novamente.');
+        return;
+      }
+
       const faceapi = faceapiRef.current;
       const img = await faceapi.fetchImage(dataUrl);
       const detection = await faceapi
         .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
         .withFaceLandmarks()
         .withFaceDescriptor();
+
       if (detection?.descriptor) {
         setFaceEmbedding(Array.from(detection.descriptor));
+        setEmbeddingStatus('success');
+        setEmbeddingFeedback('Rosto identificado com sucesso. Esta foto pode ser usada no reconhecimento facial.');
+        return;
       }
+
+      setFaceEmbedding(null);
+      setEmbeddingStatus('error');
+      setEmbeddingFeedback('Nenhum rosto válido foi identificado na foto. Refaça a captura com o rosto centralizado e bem iluminado.');
     } catch (err) {
+      setFaceEmbedding(null);
+      setEmbeddingStatus('error');
+      setEmbeddingFeedback('Não foi possível gerar o embedding facial desta foto. Tente novamente com outra captura.');
       console.error('Falha ao gerar embedding facial', err);
     }
   };
@@ -160,10 +191,24 @@ export function VisitorFormDialog({
         return;
     }
 
+    if (photoOnly && !photoChanged) {
+      alert('Cadastre uma nova foto antes de salvar.');
+      return;
+    }
+
+    if (photoOnly && embeddingStatus !== 'success') {
+      alert('A nova foto precisa gerar o reconhecimento facial com sucesso antes de salvar.');
+      return;
+    }
+
     setSaving(true);
     try {
       let response;
-      const payload = { ...formData, consentGiven: consent, faceEmbedding };
+      const payload = {
+        ...formData,
+        consentGiven: consent,
+        ...(faceEmbedding ? { faceEmbedding } : {}),
+      };
       if (formData.id) {
         response = await api.put(`/visitors/${formData.id}`, payload);
       } else {
@@ -188,38 +233,48 @@ export function VisitorFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{formData.id ? 'Editar Visitante' : 'Novo Visitante'}</DialogTitle>
-          <DialogDescription>Preencha os dados do visitante.</DialogDescription>
+          <DialogTitle>
+            {photoOnly ? 'Recadastrar Foto Facial' : formData.id ? 'Editar Visitante' : 'Novo Visitante'}
+          </DialogTitle>
+          <DialogDescription>
+            {photoOnly
+              ? 'Capture ou envie uma nova foto para atualizar o reconhecimento facial deste visitante.'
+              : 'Preencha os dados do visitante.'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome Completo</Label>
-            <Input
-              id="name"
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="document">Documento (CPF/RG)</Label>
-            <Input
-              id="document"
-              value={formData.document || ''}
-              onChange={(e) => setFormData({ ...formData, document: e.target.value })}
-              required
-            />
-          </div>
+          {!photoOnly && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="document">Documento (CPF/RG)</Label>
+                <Input
+                  id="document"
+                  value={formData.document || ''}
+                  onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+                  required
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone</Label>
-            <Input
-              id="phone"
-              value={formData.phone || ''}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone || ''}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="photo">Foto</Label>
@@ -259,8 +314,9 @@ export function VisitorFormDialog({
                     const reader = new FileReader();
                     reader.onloadend = () => {
                       const photo = reader.result as string;
-                      setFormData({ ...formData, photo });
-                      generateEmbedding(photo);
+                      setPhotoChanged(true);
+                      setFormData((prev) => ({ ...prev, photo }));
+                      void generateEmbedding(photo);
                     };
                     reader.readAsDataURL(file);
                   }
@@ -288,10 +344,31 @@ export function VisitorFormDialog({
                   </Button>
                 )}
               </div>
+
+              {embeddingStatus !== 'idle' && embeddingFeedback && (
+                <Alert
+                  className={
+                    embeddingStatus === 'success'
+                      ? 'border-green-200 bg-green-50 text-green-800'
+                      : embeddingStatus === 'processing'
+                        ? 'border-sky-200 bg-sky-50 text-sky-800'
+                        : 'border-amber-200 bg-amber-50 text-amber-800'
+                  }
+                >
+                  {embeddingStatus === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  ) : embeddingStatus === 'processing' ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-sky-600" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  )}
+                  <AlertDescription>{embeddingFeedback}</AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
 
-          {!formData.id && (
+          {!photoOnly && !formData.id && (
               <div className="flex items-start space-x-2 pt-2">
                   <Checkbox 
                       id="consent" 
@@ -314,8 +391,17 @@ export function VisitorFormDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
+            <Button
+              type="submit"
+              disabled={saving || embeddingStatus === 'processing' || (photoOnly && !photoChanged)}
+            >
+              {saving
+                ? 'Salvando...'
+                : embeddingStatus === 'processing'
+                  ? 'Processando foto...'
+                  : photoOnly
+                    ? 'Salvar Nova Foto'
+                    : 'Salvar'}
             </Button>
           </DialogFooter>
         </form>

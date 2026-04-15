@@ -23,3 +23,5 @@ pg_restore -h localhost -p 5433 -U postgres -d gestao_db db/backups/gestao_db_20
 ## Observações
 - As credenciais acima são as configuradas no ambiente atual (backend/.env).
 - Altere a senha ou host conforme o ambiente (dev/produção) e atualize o `.env` do backend.
+
+https://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soiouvidoriadigital.git
